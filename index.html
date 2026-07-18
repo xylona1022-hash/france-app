@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="法文學習">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2E4A7D">
+<title>法文學習 App</title>
+<style>
+:root{
+  --primary:#2E4A7D; --primary-light:#4472C4; --accent:#C00000;
+  --bg:#F5F6FA; --card:#FFFFFF; --text:#1B1F27; --muted:#6B7280;
+  --good:#1E8E5A; --bad:#D33; --border:#E4E7EC;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+html,body{margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Helvetica Neue",Arial,sans-serif;
+  overscroll-behavior-y: contain;}
+#app{display:flex; flex-direction:column; height:100vh; height:100dvh;}
+
+/* ---------- top bar ---------- */
+.topbar{background:var(--primary); color:#fff; padding:calc(10px + var(--safe-top)) 16px 12px;
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;}
+.topbar h1{font-size:17px; margin:0; font-weight:700;}
+.topbar .sub{font-size:11px; opacity:.75; margin-top:2px;}
+.icon-btn{background:rgba(255,255,255,.15); border:none; color:#fff; width:34px; height:34px; border-radius:10px;
+  font-size:18px; display:flex; align-items:center; justify-content:center;}
+
+/* ---------- main content ---------- */
+.view{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 14px 20px;}
+.view.hidden{display:none;}
+
+/* ---------- bottom nav ---------- */
+nav.tabbar{display:flex; background:#fff; border-top:1px solid var(--border);
+  padding-bottom: var(--safe-bottom); flex-shrink:0;}
+nav.tabbar button{flex:1; background:none; border:none; padding:8px 2px 6px; display:flex; flex-direction:column;
+  align-items:center; gap:2px; color:var(--muted); font-size:10.5px; font-family:inherit;}
+nav.tabbar button .ic{font-size:20px;}
+nav.tabbar button.active{color:var(--primary-light); font-weight:700;}
+
+/* ---------- generic components ---------- */
+.card{background:var(--card); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+h2.section-title{font-size:15px; margin:4px 0 10px; color:var(--primary); font-weight:800;}
+.btn{border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:700; font-family:inherit;}
+.btn-primary{background:var(--primary-light); color:#fff;}
+.btn-outline{background:#fff; border:1.5px solid var(--primary-light); color:var(--primary-light);}
+.btn-ghost{background:var(--bg); color:var(--text);}
+.btn-good{background:var(--good); color:#fff;}
+.btn-bad{background:var(--bad); color:#fff;}
+.btn-row{display:flex; gap:8px;}
+.btn-row .btn{flex:1;}
+.btn:disabled{opacity:.4;}
+select, input[type=text], textarea{width:100%; border:1.5px solid var(--border); border-radius:10px; padding:10px;
+  font-size:14px; font-family:inherit; background:#fff; color:var(--text);}
+textarea{resize:vertical;}
+label.field-label{font-size:12px; color:var(--muted); font-weight:700; margin:10px 0 4px; display:block;}
+.chip-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+.chip{background:#fff; border:1.5px solid var(--border); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--muted);}
+.chip.active{background:var(--primary-light); border-color:var(--primary-light); color:#fff; font-weight:700;}
+.empty-hint{color:var(--muted); font-size:13px; text-align:center; padding:30px 10px;}
+.fab{position:fixed; right:16px; bottom:calc(78px + var(--safe-bottom)); width:52px; height:52px; border-radius:50%;
+  background:var(--accent); color:#fff; border:none; font-size:26px; box-shadow:0 4px 10px rgba(0,0,0,.25); z-index:20;}
+
+/* ---------- modal ---------- */
+.modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-end; z-index:50;}
+.modal-bg.hidden{display:none;}
+.modal{background:#fff; width:100%; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(18px + var(--safe-bottom));}
+.modal h3{margin:0 0 10px; font-size:16px; color:var(--primary);}
+.modal-close{float:right; background:none; border:none; font-size:20px; color:var(--muted);}
+
+/* ---------- flashcards ---------- */
+.flash-wrap{display:flex; flex-direction:column; align-items:center;}
+.flash-progress{font-size:12px; color:var(--muted); margin-bottom:8px;}
+.flashcard{width:100%; max-width:420px; min-height:230px; border-radius:18px; background:linear-gradient(160deg,#4472C4,#2E4A7D);
+  color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:26px 18px;
+  text-align:center; box-shadow:0 6px 18px rgba(46,74,125,.35); position:relative;}
+.flashcard .pos-tag{position:absolute; top:12px; left:14px; font-size:11px; background:rgba(255,255,255,.2); padding:3px 9px; border-radius:20px;}
+.flashcard .fr-word{font-size:27px; font-weight:800; line-height:1.3;}
+.flashcard .back{margin-top:14px; font-size:15px; line-height:1.6; opacity:.97;}
+.flashcard .example{margin-top:12px; font-size:12.5px; font-style:italic; opacity:.85; border-top:1px solid rgba(255,255,255,.3); padding-top:10px;}
+.flashcard .flip-hint{position:absolute; bottom:10px; font-size:10.5px; opacity:.65;}
+.flash-actions{display:flex; gap:10px; width:100%; max-width:420px; margin-top:16px;}
+.flash-actions .btn{flex:1; padding:13px;}
+.flash-audio-row{display:flex; gap:10px; width:100%; max-width:420px; margin-top:14px;}
+.flash-audio-row .btn{flex:1; padding:11px; font-size:13px;}
+.flash-audio-row .btn.listening{background:var(--accent); color:#fff; border-color:var(--accent);}
+.flash-nav{display:flex; gap:14px; margin-top:14px; align-items:center;}
+.flash-nav button{background:none; border:none; font-size:22px; color:var(--primary-light);}
+
+/* ---------- practice ---------- */
+.practice-word{font-size:24px; font-weight:800; color:var(--primary); text-align:center; margin:6px 0 4px;}
+.practice-meaning{text-align:center; color:var(--muted); font-size:14px; margin-bottom:14px;}
+.blank-display{text-align:center; font-size:22px; letter-spacing:3px; font-weight:700; color:var(--primary); margin:12px 0;}
+.feedback{border-radius:10px; padding:10px 12px; font-size:13.5px; margin-top:10px;}
+.feedback.ok{background:#E3F5EC; color:var(--good);}
+.feedback.no{background:#FCE8E8; color:var(--bad);}
+.speaker-btn{display:block; margin:0 auto 14px; background:var(--primary-light); color:#fff; border:none; width:64px; height:64px;
+  border-radius:50%; font-size:26px;}
+
+/* ---------- reading ---------- */
+.article-item{background:#fff; border-radius:12px; padding:13px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.article-item .t{font-weight:700; font-size:14.5px; color:var(--text);}
+.article-item .meta{font-size:11.5px; color:var(--muted); margin-top:3px;}
+.article-body{background:#fff; border-radius:14px; padding:16px; font-size:15.5px; line-height:1.9; margin-bottom:14px;}
+.sel-panel{background:#FFF8E6; border:1.5px dashed #E0B84A; border-radius:12px; padding:10px 12px; margin-bottom:14px; font-size:13px;}
+.sel-panel .quote{font-style:italic; color:#7A5A00; margin-bottom:6px;}
+.note-item{background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.note-item .quote{font-size:12.5px; color:var(--primary-light); font-style:italic; border-left:3px solid var(--primary-light); padding-left:8px; margin-bottom:5px;}
+.note-item .txt{font-size:13.5px;}
+.note-item .del{float:right; color:var(--bad); font-size:12px; background:none; border:none;}
+
+/* ---------- quiz ---------- */
+.quiz-q{font-size:20px; font-weight:800; text-align:center; margin:10px 0 20px; color:var(--primary); line-height:1.5;}
+.quiz-opt{display:block; width:100%; text-align:left; background:#fff; border:1.5px solid var(--border); border-radius:12px;
+  padding:13px 14px; margin-bottom:10px; font-size:14.5px;}
+.quiz-opt .letter{display:inline-block; width:22px; height:22px; border-radius:50%; background:var(--bg); text-align:center;
+  line-height:22px; font-size:12px; font-weight:700; margin-right:8px; color:var(--muted);}
+.quiz-opt.correct{background:#E3F5EC; border-color:var(--good);}
+.quiz-opt.wrong{background:#FCE8E8; border-color:var(--bad);}
+.quiz-meta{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px;}
+.quiz-explain{background:var(--bg); border-radius:10px; padding:10px 12px; font-size:13px; margin-top:8px; color:var(--muted);}
+.result-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:13.5px;}
+
+/* ---------- stats ---------- */
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+.stat-box{background:#fff; border-radius:12px; padding:14px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.stat-box .num{font-size:24px; font-weight:800; color:var(--primary-light);}
+.stat-box .lbl{font-size:11.5px; color:var(--muted); margin-top:2px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div>
+      <h1 id="topTitle">法文學習</h1>
+      <div class="sub" id="topSub">217 個單字・95 個動詞句型</div>
+    </div>
+    <button class="icon-btn" onclick="switchTab('me')">⚙️</button>
+  </div>
+
+  <div class="view" id="view-cards"></div>
+  <div class="view hidden" id="view-practice"></div>
+  <div class="view hidden" id="view-reading"></div>
+  <div class="view hidden" id="view-quiz"></div>
+  <div class="view hidden" id="view-me"></div>
+
+  <nav class="tabbar">
+    <button data-tab="cards" class="active"><span class="ic">🗂️</span>字卡</button>
+    <button data-tab="practice"><span class="ic">✍️</span>練習</button>
+    <button data-tab="reading"><span class="ic">📖</span>閱讀</button>
+    <button data-tab="quiz"><span class="ic">📝</span>測驗</button>
+    <button data-tab="me"><span class="ic">👤</span>我的</button>
+  </nav>
+</div>
+
+<div class="modal-bg hidden" id="modalBg">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const VOCAB_DEFAULT = [{"id": "v1", "cat": "身體與健康", "french": "la tête", "pos": "n.f.", "chinese": "頭", "english": "head", "example": "J'ai mal à la tête."}, {"id": "v2", "cat": "身體與健康", "french": "la gorge", "pos": "n.f.", "chinese": "喉嚨", "english": "throat", "example": "J'ai mal à la gorge."}, {"id": "v3", "cat": "身體與健康", "french": "le ventre", "pos": "n.m.", "chinese": "肚子", "english": "stomach / belly", "example": "J'ai mal au ventre."}, {"id": "v4", "cat": "身體與健康", "french": "le dos", "pos": "n.m.", "chinese": "背", "english": "back", "example": "J'ai mal au dos."}, {"id": "v5", "cat": "身體與健康", "french": "les dents (f.)", "pos": "n.f.pl", "chinese": "牙齒", "english": "teeth", "example": "J'ai mal aux dents."}, {"id": "v6", "cat": "身體與健康", "french": "les yeux (m.)", "pos": "n.m.pl", "chinese": "眼睛", "english": "eyes", "example": "J'ai mal aux yeux."}, {"id": "v7", "cat": "身體與健康", "french": "la fièvre", "pos": "n.f.", "chinese": "發燒", "english": "fever", "example": "J'ai de la fièvre."}, {"id": "v8", "cat": "身體與健康", "french": "un rhume", "pos": "n.m.", "chinese": "感冒", "english": "a cold", "example": "J'ai attrapé un rhume."}, {"id": "v9", "cat": "身體與健康", "french": "le nez", "pos": "n.m.", "chinese": "鼻子", "english": "nose", "example": "J'ai le nez qui coule."}, {"id": "v10", "cat": "身體與健康", "french": "le sommeil", "pos": "n.m.", "chinese": "睡意", "english": "sleepiness", "example": "J'ai sommeil."}, {"id": "v11", "cat": "身體與健康", "french": "malade", "pos": "adj.", "chinese": "生病的", "english": "sick", "example": "Je suis malade."}, {"id": "v12", "cat": "身體與健康", "french": "un médicament", "pos": "n.m.", "chinese": "藥", "english": "medicine", "example": "Je dois prendre des médicaments."}, {"id": "v13", "cat": "身體與健康", "french": "un médecin", "pos": "n.m.", "chinese": "醫生", "english": "doctor", "example": "Je vais chez le médecin."}, {"id": "v14", "cat": "身體與健康", "french": "une pharmacie", "pos": "n.f.", "chinese": "藥局", "english": "pharmacy", "example": "La pharmacie est à côté d'ici."}, {"id": "v15", "cat": "身體與健康", "french": "une ordonnance", "pos": "n.f.", "chinese": "處方箋", "english": "prescription", "example": "Le médecin me donne une ordonnance."}, {"id": "v16", "cat": "身體與健康", "french": "le bras", "pos": "n.m.", "chinese": "手臂", "english": "arm", "example": "Je me suis fait mal au bras."}, {"id": "v17", "cat": "身體與健康", "french": "la jambe", "pos": "n.f.", "chinese": "腿", "english": "leg", "example": "J'ai mal à la jambe."}, {"id": "v18", "cat": "身體與健康", "french": "le pied", "pos": "n.m.", "chinese": "腳", "english": "foot", "example": "J'ai mal au pied."}, {"id": "v19", "cat": "身體與健康", "french": "la main", "pos": "n.f.", "chinese": "手", "english": "hand", "example": "Je me lave les mains."}, {"id": "v20", "cat": "身體與健康", "french": "l'oreille (f.)", "pos": "n.f.", "chinese": "耳朵", "english": "ear", "example": "J'ai mal à l'oreille."}, {"id": "v21", "cat": "身體與健康", "french": "la peau", "pos": "n.f.", "chinese": "皮膚", "english": "skin", "example": "Elle a la peau sensible."}, {"id": "v22", "cat": "身體與健康", "french": "une blessure", "pos": "n.f.", "chinese": "傷口", "english": "injury / wound", "example": "Il a une blessure au genou."}, {"id": "v23", "cat": "身體與健康", "french": "un genou", "pos": "n.m.", "chinese": "膝蓋", "english": "knee", "example": "Mon sac était sur mes genoux."}, {"id": "v24", "cat": "情緒與感覺", "french": "content(e) de", "pos": "adj.", "chinese": "開心的", "english": "happy / glad", "example": "Je suis content(e) de te voir."}, {"id": "v25", "cat": "情緒與感覺", "french": "triste", "pos": "adj.", "chinese": "難過的", "english": "sad", "example": "Elle est triste aujourd'hui."}, {"id": "v26", "cat": "情緒與感覺", "french": "fatigué(e)", "pos": "adj.", "chinese": "累的", "english": "tired", "example": "Tu as l'air fatigué."}, {"id": "v27", "cat": "情緒與感覺", "french": "en forme", "pos": "expr.", "chinese": "狀態好", "english": "in good shape", "example": "Je suis en forme ce matin."}, {"id": "v28", "cat": "情緒與感覺", "french": "occupé(e)", "pos": "adj.", "chinese": "忙碌的", "english": "busy", "example": "Je suis très occupé(e) cette semaine."}, {"id": "v29", "cat": "情緒與感覺", "french": "libre", "pos": "adj.", "chinese": "有空的", "english": "free", "example": "Tu es libre ce soir ?"}, {"id": "v30", "cat": "情緒與感覺", "french": "en colère / fâché(e)", "pos": "adj.", "chinese": "生氣的", "english": "angry", "example": "Il est en colère contre moi."}, {"id": "v31", "cat": "情緒與感覺", "french": "sûr(e) de", "pos": "adj.", "chinese": "確定的", "english": "sure / certain", "example": "Je suis sûre de ma réponse."}, {"id": "v32", "cat": "情緒與感覺", "french": "satisfait(e) de", "pos": "adj.", "chinese": "滿意的", "english": "satisfied", "example": "Il est satisfait de son travail."}, {"id": "v33", "cat": "情緒與感覺", "french": "fier / fière de", "pos": "adj.", "chinese": "驕傲的", "english": "proud", "example": "Elle est fière de son fils."}, {"id": "v34", "cat": "情緒與感覺", "french": "angoissant(e)", "pos": "adj.", "chinese": "使人焦慮的", "english": "distressing / stressful", "example": "Cette situation est très angoissante."}, {"id": "v35", "cat": "情緒與感覺", "french": "serein(e)", "pos": "adj.", "chinese": "平靜的", "english": "serene / calm", "example": "Elle reste sereine même dans les moments difficiles."}, {"id": "v36", "cat": "情緒與感覺", "french": "stressé(e)", "pos": "adj.", "chinese": "有壓力的", "english": "stressed", "example": "Je suis stressé(e) avant l'examen."}, {"id": "v37", "cat": "情緒與感覺", "french": "déçu(e)", "pos": "adj.", "chinese": "失望的", "english": "disappointed", "example": "Il est déçu du résultat."}, {"id": "v38", "cat": "情緒與感覺", "french": "surpris(e)", "pos": "adj.", "chinese": "驚訝的", "english": "surprised", "example": "Je suis surpris(e) par la nouvelle."}, {"id": "v39", "cat": "情緒與感覺", "french": "inquiet / inquiète", "pos": "adj.", "chinese": "擔心的", "english": "worried", "example": "Elle est inquiète pour son avenir."}, {"id": "v40", "cat": "情緒與感覺", "french": "indigné(e)", "pos": "adj.", "chinese": "憤慨的", "english": "outraged", "example": "Les voyageurs sont indignés."}, {"id": "v41", "cat": "情緒與感覺", "french": "sensible", "pos": "adj.", "chinese": "敏感的", "english": "sensitive", "example": "C'est un sujet sensible."}, {"id": "v42", "cat": "情緒與感覺", "french": "nécessaire", "pos": "adj.", "chinese": "必要的", "english": "necessary", "example": "Il est nécessaire de bien se reposer."}, {"id": "v43", "cat": "情緒與感覺", "french": "le stress", "pos": "n.m.", "chinese": "壓力", "english": "stress", "example": "Je ressens beaucoup de stress avant l'examen."}, {"id": "v44", "cat": "情緒與感覺", "french": "la peur", "pos": "n.f.", "chinese": "恐懼", "english": "fear", "example": "J'ai peur des araignées."}, {"id": "v45", "cat": "情緒與感覺", "french": "le réconfort", "pos": "n.m.", "chinese": "安慰", "english": "comfort", "example": "Ta présence me donne du réconfort."}, {"id": "v46", "cat": "居住與空間", "french": "un appartement", "pos": "n.m.", "chinese": "公寓", "english": "apartment", "example": "J'habite dans un appartement à Paris."}, {"id": "v47", "cat": "居住與空間", "french": "un ascenseur", "pos": "n.m.", "chinese": "電梯", "english": "elevator", "example": "Je prends l'ascenseur."}, {"id": "v48", "cat": "居住與空間", "french": "l'escalier mécanique / roulant", "pos": "n.m.", "chinese": "手扶梯", "english": "escalator", "example": "Je prends l'escalier mécanique."}, {"id": "v49", "cat": "居住與空間", "french": "la fac (la faculté)", "pos": "n.f.", "chinese": "大學", "english": "university (informal)", "example": "J'habite près de la fac."}, {"id": "v50", "cat": "居住與空間", "french": "un manteau", "pos": "n.m.", "chinese": "大衣", "english": "coat", "example": "Je porte un manteau en hiver."}, {"id": "v51", "cat": "居住與空間", "french": "une salle de bains", "pos": "n.f.", "chinese": "浴室", "english": "bathroom", "example": "La salle de bains est au premier étage."}, {"id": "v52", "cat": "居住與空間", "french": "un séjour / une salle de séjour", "pos": "n.m.", "chinese": "客廳 / 起居室", "english": "living room", "example": "Le séjour est grand et lumineux."}, {"id": "v53", "cat": "居住與空間", "french": "un accent", "pos": "n.m.", "chinese": "口音", "english": "accent", "example": "Elle a un bel accent français."}, {"id": "v54", "cat": "居住與空間", "french": "une chambre", "pos": "n.f.", "chinese": "臥室", "english": "bedroom", "example": "Ma chambre est petite mais confortable."}, {"id": "v55", "cat": "居住與空間", "french": "une cuisine", "pos": "n.f.", "chinese": "廚房", "english": "kitchen", "example": "On mange dans la cuisine."}, {"id": "v56", "cat": "居住與空間", "french": "un loyer", "pos": "n.m.", "chinese": "房租", "english": "rent", "example": "Le loyer est cher à Paris."}, {"id": "v57", "cat": "居住與空間", "french": "un quartier", "pos": "n.m.", "chinese": "街區", "english": "neighborhood", "example": "J'aime bien mon quartier."}, {"id": "v58", "cat": "居住與空間", "french": "un immeuble", "pos": "n.m.", "chinese": "大樓", "english": "building", "example": "Il habite dans un vieil immeuble."}, {"id": "v59", "cat": "居住與空間", "french": "un voisin / une voisine", "pos": "n.", "chinese": "鄰居", "english": "neighbor", "example": "Mon voisin est très sympathique."}, {"id": "v60", "cat": "衣服", "french": "un tee-shirt", "pos": "n.m.", "chinese": "T恤", "english": "t-shirt", "example": "Je porte un tee-shirt blanc."}, {"id": "v61", "cat": "衣服", "french": "un caleçon", "pos": "n.m.", "chinese": "四角褲 / 短褲", "english": "boxers", "example": "Il achète un caleçon."}, {"id": "v62", "cat": "衣服", "french": "des chaussettes (f.)", "pos": "n.f.pl", "chinese": "襪子", "english": "socks", "example": "Mes chaussettes sont bleues."}, {"id": "v63", "cat": "衣服", "french": "des baskets (f.)", "pos": "n.f.pl", "chinese": "運動鞋", "english": "sneakers", "example": "J'achète des baskets pour faire du sport."}, {"id": "v64", "cat": "衣服", "french": "un pantalon", "pos": "n.m.", "chinese": "長褲", "english": "pants / trousers", "example": "Il porte un pantalon noir."}, {"id": "v65", "cat": "衣服", "french": "une chemise", "pos": "n.f.", "chinese": "襯衫", "english": "shirt", "example": "Il met une chemise pour le travail."}, {"id": "v66", "cat": "衣服", "french": "une robe", "pos": "n.f.", "chinese": "洋裝", "english": "dress", "example": "Elle porte une robe élégante."}, {"id": "v67", "cat": "衣服", "french": "des chaussures (f.)", "pos": "n.f.pl", "chinese": "鞋子", "english": "shoes", "example": "J'ai besoin de nouvelles chaussures."}, {"id": "v68", "cat": "衣服", "french": "une jupe", "pos": "n.f.", "chinese": "裙子", "english": "skirt", "example": "Elle porte une jupe courte."}, {"id": "v69", "cat": "衣服", "french": "un pull", "pos": "n.m.", "chinese": "毛衣 / 針織衫", "english": "sweater", "example": "Je mets un pull quand il fait froid."}, {"id": "v70", "cat": "衣服", "french": "une écharpe", "pos": "n.f.", "chinese": "圍巾", "english": "scarf", "example": "Elle porte une écharpe en hiver."}, {"id": "v71", "cat": "衣服", "french": "un bonnet", "pos": "n.m.", "chinese": "毛帽", "english": "winter hat / beanie", "example": "Il porte un bonnet quand il neige."}, {"id": "v72", "cat": "衣服", "french": "une veste", "pos": "n.f.", "chinese": "外套 / 夾克", "english": "jacket", "example": "Prends ta veste, il fait frais."}, {"id": "v73", "cat": "衣服", "french": "des moufles (f.)", "pos": "n.f.pl", "chinese": "連指手套", "english": "mittens", "example": "Les enfants portent des moufles."}, {"id": "v74", "cat": "衣服", "french": "un blouson", "pos": "n.m.", "chinese": "夾克", "english": "jacket", "example": "Le voleur portait un blouson en jean."}, {"id": "v75", "cat": "衣服", "french": "un jean", "pos": "n.m.", "chinese": "牛仔褲", "english": "jeans", "example": "Il porte un jean et un blouson."}, {"id": "v76", "cat": "衣服", "french": "des gants (m.)", "pos": "n.m.pl", "chinese": "手套", "english": "gloves", "example": "Mets tes gants, il fait froid."}, {"id": "v77", "cat": "衣服", "french": "une casquette", "pos": "n.f.", "chinese": "棒球帽", "english": "cap", "example": "Il porte toujours une casquette."}, {"id": "v78", "cat": "衣服", "french": "un maillot de bain", "pos": "n.m.", "chinese": "泳裝", "english": "swimsuit", "example": "J'ai oublié mon maillot de bain."}, {"id": "v79", "cat": "日期與星期", "french": "janvier", "pos": "n.m.", "chinese": "一月", "english": "January", "example": ""}, {"id": "v80", "cat": "日期與星期", "french": "février", "pos": "n.m.", "chinese": "二月", "english": "February", "example": ""}, {"id": "v81", "cat": "日期與星期", "french": "mars", "pos": "n.m.", "chinese": "三月", "english": "March", "example": ""}, {"id": "v82", "cat": "日期與星期", "french": "avril", "pos": "n.m.", "chinese": "四月", "english": "April", "example": ""}, {"id": "v83", "cat": "日期與星期", "french": "mai", "pos": "n.m.", "chinese": "五月", "english": "May", "example": ""}, {"id": "v84", "cat": "日期與星期", "french": "juin", "pos": "n.m.", "chinese": "六月", "english": "June", "example": ""}, {"id": "v85", "cat": "日期與星期", "french": "juillet", "pos": "n.m.", "chinese": "七月", "english": "July", "example": ""}, {"id": "v86", "cat": "日期與星期", "french": "août", "pos": "n.m.", "chinese": "八月", "english": "August", "example": ""}, {"id": "v87", "cat": "日期與星期", "french": "septembre", "pos": "n.m.", "chinese": "九月", "english": "September", "example": ""}, {"id": "v88", "cat": "日期與星期", "french": "octobre", "pos": "n.m.", "chinese": "十月", "english": "October", "example": ""}, {"id": "v89", "cat": "日期與星期", "french": "novembre", "pos": "n.m.", "chinese": "十一月", "english": "November", "example": ""}, {"id": "v90", "cat": "日期與星期", "french": "décembre", "pos": "n.m.", "chinese": "十二月", "english": "December", "example": ""}, {"id": "v91", "cat": "日期與星期", "french": "lundi", "pos": "n.m.", "chinese": "星期一", "english": "Monday", "example": ""}, {"id": "v92", "cat": "日期與星期", "french": "mardi", "pos": "n.m.", "chinese": "星期二", "english": "Tuesday", "example": ""}, {"id": "v93", "cat": "日期與星期", "french": "mercredi", "pos": "n.m.", "chinese": "星期三", "english": "Wednesday", "example": ""}, {"id": "v94", "cat": "日期與星期", "french": "jeudi", "pos": "n.m.", "chinese": "星期四", "english": "Thursday", "example": ""}, {"id": "v95", "cat": "日期與星期", "french": "vendredi", "pos": "n.m.", "chinese": "星期五", "english": "Friday", "example": ""}, {"id": "v96", "cat": "日期與星期", "french": "samedi", "pos": "n.m.", "chinese": "星期六", "english": "Saturday", "example": "Je suis libre samedi (=ce samedi)."}, {"id": "v97", "cat": "日期與星期", "french": "le samedi", "pos": "expr.", "chinese": "每個星期六", "english": "on Saturdays (habitually)", "example": "Je fais du sport le samedi."}, {"id": "v98", "cat": "日期與星期", "french": "dimanche", "pos": "n.m.", "chinese": "星期日", "english": "Sunday", "example": ""}, {"id": "v99", "cat": "日期與星期", "french": "aujourd'hui", "pos": "adv.", "chinese": "今天", "english": "today", "example": ""}, {"id": "v100", "cat": "日期與星期", "french": "demain", "pos": "adv.", "chinese": "明天", "english": "tomorrow", "example": ""}, {"id": "v101", "cat": "日期與星期", "french": "hier", "pos": "adv.", "chinese": "昨天", "english": "yesterday", "example": ""}, {"id": "v102", "cat": "天氣", "french": "Il fait beau.", "pos": "expr.", "chinese": "天氣很好", "english": "The weather is nice.", "example": ""}, {"id": "v103", "cat": "天氣", "french": "Il fait chaud / froid.", "pos": "expr.", "chinese": "天氣熱 / 冷", "english": "It's hot / cold.", "example": ""}, {"id": "v104", "cat": "天氣", "french": "Il fait frais.", "pos": "expr.", "chinese": "天氣涼爽", "english": "It's cool.", "example": ""}, {"id": "v105", "cat": "天氣", "french": "Il fait mauvais.", "pos": "expr.", "chinese": "天氣不好", "english": "The weather is bad.", "example": ""}, {"id": "v106", "cat": "天氣", "french": "Il pleut.", "pos": "expr.", "chinese": "下雨", "english": "It's raining.", "example": ""}, {"id": "v107", "cat": "天氣", "french": "Il neige.", "pos": "expr.", "chinese": "下雪", "english": "It's snowing.", "example": ""}, {"id": "v108", "cat": "天氣", "french": "Il y a du soleil.", "pos": "expr.", "chinese": "有太陽", "english": "It's sunny.", "example": ""}, {"id": "v109", "cat": "天氣", "french": "Il y a du vent.", "pos": "expr.", "chinese": "有風", "english": "It's windy.", "example": ""}, {"id": "v110", "cat": "天氣", "french": "Il y a des nuages.", "pos": "expr.", "chinese": "多雲", "english": "It's cloudy.", "example": ""}, {"id": "v111", "cat": "天氣", "french": "la météo", "pos": "n.f.", "chinese": "天氣預報", "english": "the weather forecast", "example": "La météo annonce de la pluie."}, {"id": "v112", "cat": "天氣", "french": "un orage", "pos": "n.m.", "chinese": "暴風雨", "english": "storm", "example": "Il y a un risque d'orage ce soir."}, {"id": "v113", "cat": "天氣", "french": "le brouillard", "pos": "n.m.", "chinese": "霧", "english": "fog", "example": "Il y a du brouillard ce matin."}, {"id": "v114", "cat": "數量詞", "french": "beaucoup de", "pos": "adv.", "chinese": "很多", "english": "a lot of", "example": "Il y a beaucoup d'opportunités."}, {"id": "v115", "cat": "數量詞", "french": "un peu de", "pos": "adv.", "chinese": "一點", "english": "a little", "example": "J'ai un peu de temps."}, {"id": "v116", "cat": "數量詞", "french": "assez de", "pos": "adv.", "chinese": "足夠", "english": "enough", "example": "Il n'y a pas assez de sel."}, {"id": "v117", "cat": "數量詞", "french": "trop de", "pos": "adv.", "chinese": "太多", "english": "too much / too many", "example": "Il y a trop de bruit."}, {"id": "v118", "cat": "數量詞", "french": "peu de", "pos": "adv.", "chinese": "很少", "english": "little / few", "example": "J'ai peu de temps libre."}, {"id": "v119", "cat": "數量詞", "french": "plus de", "pos": "adv.", "chinese": "更多", "english": "more", "example": "Je veux plus de confort."}, {"id": "v120", "cat": "數量詞", "french": "moins de", "pos": "adv.", "chinese": "更少", "english": "less / fewer", "example": "Le poisson est moins cher que la viande."}, {"id": "v121", "cat": "數量詞", "french": "environ", "pos": "adv.", "chinese": "大約", "english": "about / approximately", "example": "J'étudie environ deux heures par jour."}, {"id": "v122", "cat": "頻率副詞", "french": "toujours", "pos": "adv.", "chinese": "總是 (100%)", "english": "always", "example": "Je vais toujours à la salle de sport."}, {"id": "v123", "cat": "頻率副詞", "french": "souvent", "pos": "adv.", "chinese": "常常 (75%)", "english": "often", "example": "Je vais souvent au cinéma."}, {"id": "v124", "cat": "頻率副詞", "french": "parfois", "pos": "adv.", "chinese": "有時候 (50%)", "english": "sometimes", "example": "Je suis parfois allée à Taipei."}, {"id": "v125", "cat": "頻率副詞", "french": "de temps en temps", "pos": "adv.", "chinese": "偶爾 (40%)", "english": "from time to time", "example": "Je sors de temps en temps."}, {"id": "v126", "cat": "頻率副詞", "french": "rarement", "pos": "adv.", "chinese": "很少 (25%)", "english": "rarely / seldom", "example": "Je mange rarement de la viande."}, {"id": "v127", "cat": "頻率副詞", "french": "jamais", "pos": "adv.", "chinese": "從不 (0%)", "english": "never", "example": "Je ne suis jamais allée en Italie."}, {"id": "v128", "cat": "地點介系詞", "french": "sur", "pos": "prép.", "chinese": "在...上面", "english": "on", "example": "Le livre est sur la table."}, {"id": "v129", "cat": "地點介系詞", "french": "sous", "pos": "prép.", "chinese": "在...下面", "english": "under", "example": "Le chat est sous la table."}, {"id": "v130", "cat": "地點介系詞", "french": "dans", "pos": "prép.", "chinese": "在...裡面", "english": "in / inside", "example": "Le stylo est dans le sac."}, {"id": "v131", "cat": "地點介系詞", "french": "à", "pos": "prép.", "chinese": "在 / 去", "english": "at / to / in", "example": "Je vais à Paris."}, {"id": "v132", "cat": "地點介系詞", "french": "en", "pos": "prép.", "chinese": "在 / 去 (陰性國家)", "english": "in / to", "example": "Je vais en France."}, {"id": "v133", "cat": "地點介系詞", "french": "au", "pos": "prép.", "chinese": "在 / 去 (陽性國家)", "english": "in / to", "example": "Je vais au Japon."}, {"id": "v134", "cat": "地點介系詞", "french": "aux", "pos": "prép.", "chinese": "在 / 去 (複數國家)", "english": "in / to", "example": "Je vais aux États-Unis."}, {"id": "v135", "cat": "地點介系詞", "french": "chez", "pos": "prép.", "chinese": "在...某人家", "english": "at / to someone's place", "example": "Je vais chez mon ami."}, {"id": "v136", "cat": "地點介系詞", "french": "devant", "pos": "prép.", "chinese": "在...前面", "english": "in front of", "example": "Je suis devant l'école."}, {"id": "v137", "cat": "地點介系詞", "french": "derrière", "pos": "prép.", "chinese": "在...後面", "english": "behind", "example": "La voiture est derrière la maison."}, {"id": "v138", "cat": "地點介系詞", "french": "entre", "pos": "prép.", "chinese": "在...之間", "english": "between", "example": "Je suis entre deux amis."}, {"id": "v139", "cat": "地點介系詞", "french": "à côté de", "pos": "prép.", "chinese": "在...旁邊", "english": "next to / beside", "example": "La banque est à côté du café."}, {"id": "v140", "cat": "地點介系詞", "french": "près de", "pos": "prép.", "chinese": "靠近", "english": "near", "example": "J'habite près de la gare."}, {"id": "v141", "cat": "地點介系詞", "french": "loin de", "pos": "prép.", "chinese": "遠離", "english": "far from", "example": "J'habite loin de l'école."}, {"id": "v142", "cat": "地點介系詞", "french": "en face de", "pos": "prép.", "chinese": "在...對面", "english": "opposite / across from", "example": "Le café est en face de la gare."}, {"id": "v143", "cat": "時間介系詞與連接詞", "french": "depuis + 時間", "pos": "prép.", "chinese": "已經...了 (現在仍持續)", "english": "since / for (ongoing)", "example": "J'apprends le français depuis un an."}, {"id": "v144", "cat": "時間介系詞與連接詞", "french": "il y a + 時間", "pos": "prép.", "chinese": "...之前 (過去發生)", "english": "ago", "example": "Je suis allée à Paris il y a deux ans."}, {"id": "v145", "cat": "時間介系詞與連接詞", "french": "pendant + 時間", "pos": "prép.", "chinese": "持續...時間 (通常已結束)", "english": "during / for (completed)", "example": "J'ai voyagé pendant une semaine."}, {"id": "v146", "cat": "時間介系詞與連接詞", "french": "dans + 時間", "pos": "prép.", "chinese": "...之後 (未來)", "english": "in (future)", "example": "Je vais partir dans deux jours."}, {"id": "v147", "cat": "時間介系詞與連接詞", "french": "avant (de)", "pos": "prép.", "chinese": "...之前", "english": "before", "example": "Je vais manger avant de partir."}, {"id": "v148", "cat": "時間介系詞與連接詞", "french": "après", "pos": "prép.", "chinese": "...之後", "english": "after", "example": "Après, nous sommes allés à la plage."}, {"id": "v149", "cat": "時間介系詞與連接詞", "french": "jusqu'à", "pos": "prép.", "chinese": "直到", "english": "until", "example": "J'ai travaillé jusqu'à minuit."}, {"id": "v150", "cat": "時間介系詞與連接詞", "french": "parce que", "pos": "conj.", "chinese": "因為", "english": "because", "example": "Je reste à la maison parce qu'il pleut."}, {"id": "v151", "cat": "時間介系詞與連接詞", "french": "car", "pos": "conj.", "chinese": "因為 (較書面)", "english": "because (more formal)", "example": "Il est absent, car il est malade."}, {"id": "v152", "cat": "時間介系詞與連接詞", "french": "donc / alors", "pos": "conj.", "chinese": "所以", "english": "so / therefore", "example": "Il pleut, donc je reste à la maison."}, {"id": "v153", "cat": "時間介系詞與連接詞", "french": "mais", "pos": "conj.", "chinese": "但是", "english": "but", "example": "J'aime Paris, mais c'est cher."}, {"id": "v154", "cat": "時間介系詞與連接詞", "french": "en effet", "pos": "expr.", "chinese": "的確 / 因為", "english": "indeed / in fact", "example": "En effet, c'est une bonne idée."}, {"id": "v155", "cat": "時間介系詞與連接詞", "french": "à cause de", "pos": "prép.", "chinese": "因為 (負面原因)", "english": "because of (negative)", "example": "Le vol est annulé à cause de la météo."}, {"id": "v156", "cat": "時間介系詞與連接詞", "french": "grâce à", "pos": "prép.", "chinese": "多虧 (正面原因)", "english": "thanks to (positive)", "example": "Grâce à mon professeur, je parle mieux français."}, {"id": "v157", "cat": "時間介系詞與連接詞", "french": "encore", "pos": "adv.", "chinese": "還 / 仍然 / 再", "english": "still / again / more", "example": "Je vais encore aller en France."}, {"id": "v158", "cat": "時間介系詞與連接詞", "french": "encore une fois", "pos": "expr.", "chinese": "再一次", "english": "once again", "example": "Tu peux répéter encore une fois ?"}, {"id": "v159", "cat": "時間介系詞與連接詞", "french": "presque", "pos": "adv.", "chinese": "差不多 / 幾乎", "english": "almost", "example": "Je suis presque en colère."}, {"id": "v160", "cat": "時間介系詞與連接詞", "french": "enfin", "pos": "adv.", "chinese": "最後 / 終於", "english": "finally / at last", "example": "Enfin, on est arrivés."}, {"id": "v161", "cat": "時間介系詞與連接詞", "french": "quand même", "pos": "expr.", "chinese": "還是 / 仍然", "english": "still / even so", "example": "C'est cher, quand même !"}, {"id": "v162", "cat": "時間介系詞與連接詞", "french": "même", "pos": "adj./adv.", "chinese": "同樣的 / 甚至", "english": "same / even", "example": "On porte le même vêtement."}, {"id": "v163", "cat": "時間介系詞與連接詞", "french": "différent(e)", "pos": "adj.", "chinese": "不同的", "english": "different", "example": "Nos avis sont différents."}, {"id": "v164", "cat": "時間介系詞與連接詞", "french": "quand", "pos": "conj./adv.", "chinese": "當...的時候 / 何時", "english": "when", "example": "Quand tu pars ?"}, {"id": "v165", "cat": "時間介系詞與連接詞", "french": "juste", "pos": "adv.", "chinese": "剛好 / 附近", "english": "just / right (nearby)", "example": "La gare est juste à côté."}, {"id": "v166", "cat": "餐廳用語", "french": "commander", "pos": "v. (voir fichier verbes)", "chinese": "點餐", "english": "to order", "example": "Je commande un café."}, {"id": "v167", "cat": "餐廳用語", "french": "commenter", "pos": "v. (voir fichier verbes)", "chinese": "評論", "english": "to comment on", "example": "Vous pouvez commenter le repas."}, {"id": "v168", "cat": "餐廳用語", "french": "Ça a été ?", "pos": "expr.", "chinese": "吃得還好嗎？", "english": "Was it good? (informal)", "example": "Ça a été, le dîner ?"}, {"id": "v169", "cat": "餐廳用語", "french": "Ça vous a plu ?", "pos": "expr.", "chinese": "您喜歡嗎？", "english": "Did you like it?", "example": "Ça vous a plu, ce restaurant ?"}, {"id": "v170", "cat": "餐廳用語", "french": "Bon appétit !", "pos": "expr.", "chinese": "祝你用餐愉快", "english": "Enjoy your meal!", "example": ""}, {"id": "v171", "cat": "餐廳用語", "french": "délicieux / excellent", "pos": "adj.", "chinese": "美味的", "english": "delicious / excellent", "example": "C'est délicieux !"}, {"id": "v172", "cat": "餐廳用語", "french": "fade", "pos": "adj.", "chinese": "味道太淡", "english": "bland", "example": "C'est fade, il manque du sel."}, {"id": "v173", "cat": "餐廳用語", "french": "salé(e)", "pos": "adj.", "chinese": "味道太鹹", "english": "salty", "example": "C'est trop salé pour moi."}, {"id": "v174", "cat": "餐廳用語", "french": "Ce n'est pas assez cuit.", "pos": "expr.", "chinese": "沒煮熟 (太生)", "english": "It's not cooked enough.", "example": ""}, {"id": "v175", "cat": "餐廳用語", "french": "le sel", "pos": "n.m.", "chinese": "鹽", "english": "salt", "example": "Vous pouvez me passer le sel ?"}, {"id": "v176", "cat": "餐廳用語", "french": "goûter", "pos": "v. (voir fichier verbes)", "chinese": "嚐一口", "english": "to taste", "example": "Tu veux goûter ?"}, {"id": "v177", "cat": "餐廳用語", "french": "Je me régale.", "pos": "expr.", "chinese": "享受美食", "english": "I'm enjoying the food a lot.", "example": ""}, {"id": "v178", "cat": "竊盜與警局", "french": "des affaires (f.)", "pos": "n.f.pl", "chinese": "財物", "english": "belongings", "example": "On a volé ses affaires."}, {"id": "v179", "cat": "竊盜與警局", "french": "un appareil photo", "pos": "n.m.", "chinese": "相機", "english": "camera", "example": "Mon appareil photo était sur mes genoux."}, {"id": "v180", "cat": "竊盜與警局", "french": "un blouson en jean", "pos": "n.m.", "chinese": "牛仔外套", "english": "denim jacket", "example": "Il portait un blouson en jean."}, {"id": "v181", "cat": "竊盜與警局", "french": "un commissariat", "pos": "n.m.", "chinese": "警察局", "english": "police station", "example": "On va au commissariat."}, {"id": "v182", "cat": "竊盜與警局", "french": "un sac", "pos": "n.m.", "chinese": "包包", "english": "bag", "example": "On m'a volé mon sac."}, {"id": "v183", "cat": "竊盜與警局", "french": "un vol", "pos": "n.m.", "chinese": "竊盜", "english": "theft / robbery", "example": "Le vol s'est passé dans le métro."}, {"id": "v184", "cat": "竊盜與警局", "french": "un voleur / une voleuse", "pos": "n.", "chinese": "小偷", "english": "thief", "example": "Vous pouvez décrire votre voleur ?"}, {"id": "v185", "cat": "竊盜與警局", "french": "un policier / une inspectrice", "pos": "n.", "chinese": "警察 / 探員", "english": "police officer / inspector", "example": "L'inspecteur pose des questions."}, {"id": "v186", "cat": "竊盜與警局", "french": "la police", "pos": "n.f.", "chinese": "警方", "english": "the police", "example": "Il faut aller à la police porter plainte."}, {"id": "v187", "cat": "竊盜與警局", "french": "une porte", "pos": "n.f.", "chinese": "門", "english": "door", "example": "Il est entré par la porte."}, {"id": "v188", "cat": "竊盜與警局", "french": "un portefeuille", "pos": "n.m.", "chinese": "皮夾", "english": "wallet", "example": "J'ai perdu mon portefeuille."}, {"id": "v189", "cat": "竊盜與警局", "french": "un porte-monnaie", "pos": "n.m.", "chinese": "零錢包", "english": "coin purse", "example": "Son porte-monnaie était dans le sac."}, {"id": "v190", "cat": "竊盜與警局", "french": "une bouteille d'eau", "pos": "n.f.", "chinese": "水瓶", "english": "water bottle", "example": "Il y avait une bouteille d'eau dans le sac."}, {"id": "v191", "cat": "竊盜與警局", "french": "un ordinateur", "pos": "n.m.", "chinese": "電腦", "english": "computer", "example": "Mon ordinateur était dans le sac."}, {"id": "v192", "cat": "竊盜與警局", "french": "des écouteurs (m.)", "pos": "n.m.pl", "chinese": "耳機", "english": "earphones", "example": "J'ai mis mes écouteurs."}, {"id": "v193", "cat": "竊盜與警局", "french": "un passeport", "pos": "n.m.", "chinese": "護照", "english": "passport", "example": "N'oublie pas ton passeport."}, {"id": "v194", "cat": "竊盜與警局", "french": "des clés (f.)", "pos": "n.f.pl", "chinese": "鑰匙", "english": "keys", "example": "Où sont mes clés ?"}, {"id": "v195", "cat": "竊盜與警局", "french": "une carte d'identité", "pos": "n.f.", "chinese": "身分證", "english": "ID card", "example": "J'ai perdu ma carte d'identité."}, {"id": "v196", "cat": "竊盜與警局", "french": "une carte de crédit", "pos": "n.f.", "chinese": "信用卡", "english": "credit card", "example": "Il a payé avec sa carte de crédit."}, {"id": "v197", "cat": "竊盜與警局", "french": "climatisé(e)", "pos": "adj.", "chinese": "有冷氣的", "english": "air-conditioned", "example": "Le métro est climatisé."}, {"id": "v198", "cat": "交通與火車", "french": "des voyageurs d'affaires", "pos": "n.m.pl", "chinese": "商務旅客", "english": "business travelers", "example": "Ce train est fait pour les voyageurs d'affaires."}, {"id": "v199", "cat": "交通與火車", "french": "le confort", "pos": "n.m.", "chinese": "舒適", "english": "comfort", "example": "Une certaine idée du confort."}, {"id": "v200", "cat": "交通與火車", "french": "des sièges spacieux", "pos": "n.m.pl", "chinese": "寬敞的座位", "english": "spacious seats", "example": "Le train a des sièges spacieux."}, {"id": "v201", "cat": "交通與火車", "french": "un plateau-repas", "pos": "n.m.", "chinese": "(飛機/火車) 餐盤", "english": "meal tray", "example": "On sert des plateaux-repas dans le train."}, {"id": "v202", "cat": "交通與火車", "french": "une offre", "pos": "n.f.", "chinese": "方案 / 優惠", "english": "offer / deal", "example": "La SNCF propose une nouvelle offre."}, {"id": "v203", "cat": "交通與火車", "french": "des espaces réservés", "pos": "n.m.pl", "chinese": "專用/保留區域", "english": "reserved areas", "example": "Il y a des espaces réservés aux familles."}, {"id": "v204", "cat": "交通與火車", "french": "les réseaux sociaux", "pos": "n.m.pl", "chinese": "社群網路", "english": "social media", "example": "Les critiques se multiplient sur les réseaux sociaux."}, {"id": "v205", "cat": "交通與火車", "french": "le transport en commun", "pos": "n.m.", "chinese": "大眾運輸", "english": "public transport", "example": "Je prends le transport en commun tous les jours."}, {"id": "v206", "cat": "交通與火車", "french": "un embouteillage", "pos": "n.m.", "chinese": "塞車", "english": "traffic jam", "example": "Il y a un embouteillage sur l'autoroute."}, {"id": "v207", "cat": "交通與火車", "french": "une gare", "pos": "n.f.", "chinese": "火車站", "english": "train station", "example": "La gare est à côté de la fac."}, {"id": "v208", "cat": "交通與火車", "french": "un billet", "pos": "n.m.", "chinese": "車票", "english": "ticket", "example": "J'ai acheté un billet de train."}, {"id": "v209", "cat": "社會議題", "french": "énorme", "pos": "adj.", "chinese": "巨大的", "english": "huge / enormous", "example": "C'est un énorme problème."}, {"id": "v210", "cat": "社會議題", "french": "la discrimination", "pos": "n.f.", "chinese": "歧視", "english": "discrimination", "example": "Il faut lutter contre la discrimination."}, {"id": "v211", "cat": "社會議題", "french": "un sujet", "pos": "n.m.", "chinese": "主題", "english": "topic / subject", "example": "C'est un sujet sensible."}, {"id": "v212", "cat": "社會議題", "french": "sensible", "pos": "adj.", "chinese": "敏感的", "english": "sensitive", "example": "C'est un sujet sensible."}, {"id": "v213", "cat": "社會議題", "french": "exclure", "pos": "v. (voir fichier verbes)", "chinese": "排除", "english": "to exclude", "example": "Ce billet exclut les enfants."}, {"id": "v214", "cat": "社會議題", "french": "ne...que", "pos": "expr.", "chinese": "只有 / 僅僅", "english": "only", "example": "Je n'ai vu que son dos."}, {"id": "v215", "cat": "社會議題", "french": "ne...plus du tout", "pos": "expr.", "chinese": "完全不再", "english": "not at all anymore", "example": "Je ne fume plus du tout."}, {"id": "v216", "cat": "社會議題", "french": "faire des enfants", "pos": "expr.", "chinese": "生小孩", "english": "to have children", "example": "Ils ont décidé de faire des enfants."}, {"id": "v217", "cat": "社會議題", "french": "pas assez", "pos": "expr.", "chinese": "不夠", "english": "not enough", "example": "Il n'y a pas assez de places."}];
+const VERB_DEFAULT = [{"id": "g1", "cat": "反身動詞(日常作息)", "french": "se réveiller", "chinese": "醒來", "english": "to wake up", "present": "je me réveille", "futur": "je vais me réveiller", "pc": "je me suis réveillé(e)", "imparfait": "je me réveillais", "example": "Je me réveille à huit heures."}, {"id": "g2", "cat": "反身動詞(日常作息)", "french": "se lever", "chinese": "起床", "english": "to get up", "present": "je me lève", "futur": "je vais me lever", "pc": "je me suis levé(e)", "imparfait": "je me levais", "example": "Je me lève tôt."}, {"id": "g3", "cat": "反身動詞(日常作息)", "french": "se préparer", "chinese": "準備好", "english": "to get ready", "present": "je me prépare", "futur": "je vais me préparer", "pc": "je me suis préparé(e)", "imparfait": "je me préparais", "example": "Je me prépare avant de sortir."}, {"id": "g4", "cat": "反身動詞(日常作息)", "french": "s'habiller", "chinese": "穿衣服", "english": "to get dressed", "present": "je m'habille", "futur": "je vais m'habiller", "pc": "je me suis habillé(e)", "imparfait": "je m'habillais", "example": "Je m'habille vite le matin."}, {"id": "g5", "cat": "反身動詞(日常作息)", "french": "se maquiller", "chinese": "化妝", "english": "to put on makeup", "present": "je me maquille", "futur": "je vais me maquiller", "pc": "je me suis maquillé(e)", "imparfait": "je me maquillais", "example": "Elle se maquille avant de sortir."}, {"id": "g6", "cat": "反身動詞(日常作息)", "french": "se coiffer", "chinese": "整理頭髮", "english": "to do one's hair", "present": "je me coiffe", "futur": "je vais me coiffer", "pc": "je me suis coiffé(e)", "imparfait": "je me coiffais", "example": "Je me coiffe devant le miroir."}, {"id": "g7", "cat": "反身動詞(日常作息)", "french": "se brosser les dents", "chinese": "刷牙", "english": "to brush one's teeth", "present": "je me brosse les dents", "futur": "je vais me brosser les dents", "pc": "je me suis brossé les dents", "imparfait": "je me brossais les dents", "example": "Je me brosse les dents deux fois par jour."}, {"id": "g8", "cat": "反身動詞(日常作息)", "french": "se laver", "chinese": "洗澡", "english": "to wash (oneself)", "present": "je me lave", "futur": "je vais me laver", "pc": "je me suis lavé(e)", "imparfait": "je me lavais", "example": "Je me lave le matin."}, {"id": "g9", "cat": "反身動詞(日常作息)", "french": "se doucher", "chinese": "淋浴", "english": "to shower", "present": "je me douche", "futur": "je vais me doucher", "pc": "je me suis douché(e)", "imparfait": "je me douchais", "example": "Je me douche tous les soirs."}, {"id": "g10", "cat": "反身動詞(日常作息)", "french": "se reposer", "chinese": "休息", "english": "to rest", "present": "je me repose", "futur": "je vais me reposer", "pc": "je me suis reposé(e)", "imparfait": "je me reposais", "example": "Je me repose après le travail."}, {"id": "g11", "cat": "反身動詞(日常作息)", "french": "se détendre", "chinese": "放鬆", "english": "to relax", "present": "je me détends", "futur": "je vais me détendre", "pc": "je me suis détendu(e)", "imparfait": "je me détendais", "example": "Je me détends le week-end."}, {"id": "g12", "cat": "反身動詞(日常作息)", "french": "se coucher", "chinese": "上床睡覺", "english": "to go to bed", "present": "je me couche", "futur": "je vais me coucher", "pc": "je me suis couché(e)", "imparfait": "je me couchais", "example": "Je me couche à minuit."}, {"id": "g13", "cat": "反身動詞(日常作息)", "french": "s'endormir", "chinese": "睡著", "english": "to fall asleep", "present": "je m'endors", "futur": "je vais m'endormir", "pc": "je me suis endormi(e)", "imparfait": "je m'endormais", "example": "Je m'endors vite."}, {"id": "g14", "cat": "反身動詞(日常作息)", "french": "dormir", "chinese": "睡覺 (非反身)", "english": "to sleep", "present": "je dors", "futur": "je vais dormir", "pc": "j'ai dormi", "imparfait": "je dormais", "example": "Je dors huit heures."}, {"id": "g15", "cat": "其他常用動詞", "french": "aller", "chinese": "去", "english": "to go", "present": "je vais", "futur": "je vais aller", "pc": "je suis allé(e)", "imparfait": "j'allais", "example": "Je vais à Paris."}, {"id": "g16", "cat": "其他常用動詞", "french": "devoir", "chinese": "必須", "english": "must / to have to", "present": "je dois", "futur": "je vais devoir", "pc": "j'ai dû", "imparfait": "je devais", "example": "Je dois étudier le français."}, {"id": "g17", "cat": "其他常用動詞", "french": "il faut (無人稱)", "chinese": "必須 / 需要 (一般規則，沒有特定人)", "english": "one must (impersonal)", "present": "il faut", "futur": "il faudra", "pc": "il a fallu", "imparfait": "il fallait", "example": "Il faut chercher un stage."}, {"id": "g18", "cat": "其他常用動詞", "french": "s'asseoir", "chinese": "坐下 (動作)", "english": "to sit down", "present": "je m'assois", "futur": "je vais m'asseoir", "pc": "je me suis assis(e)", "imparfait": "je m'asseyais", "example": "Je m'assois sur la chaise."}, {"id": "g19", "cat": "其他常用動詞", "french": "être assis(e)", "chinese": "坐著 (狀態)", "english": "to be seated (state)", "present": "je suis assis(e)", "futur": "--", "pc": "--", "imparfait": "j'étais assis(e)", "example": "Il est assis à côté de moi."}, {"id": "g20", "cat": "其他常用動詞", "french": "attraper", "chinese": "抓住 / 感染上", "english": "to catch", "present": "j'attrape", "futur": "je vais attraper", "pc": "j'ai attrapé", "imparfait": "j'attrapais", "example": "Il a attrapé le voleur."}, {"id": "g21", "cat": "其他常用動詞", "french": "décrire", "chinese": "描述", "english": "to describe", "present": "je décris", "futur": "je vais décrire", "pc": "j'ai décrit", "imparfait": "je décrivais", "example": "Décrivez votre voleur."}, {"id": "g22", "cat": "其他常用動詞", "french": "lire", "chinese": "讀", "english": "to read", "present": "je lis", "futur": "je vais lire", "pc": "j'ai lu", "imparfait": "je lisais", "example": "Je lisais dans le métro."}, {"id": "g23", "cat": "其他常用動詞", "french": "pleurer", "chinese": "哭", "english": "to cry", "present": "je pleure", "futur": "je vais pleurer", "pc": "j'ai pleuré", "imparfait": "je pleurais", "example": "Ne pleurez pas."}, {"id": "g24", "cat": "其他常用動詞", "french": "porter plainte", "chinese": "報案 / 提告", "english": "to file a complaint", "present": "je porte plainte", "futur": "je vais porter plainte", "pc": "j'ai porté plainte", "imparfait": "je portais plainte", "example": "Il faut aller porter plainte à la police."}, {"id": "g25", "cat": "其他常用動詞", "french": "sauter", "chinese": "跳", "english": "to jump", "present": "je saute", "futur": "je vais sauter", "pc": "j'ai sauté", "imparfait": "je sautais", "example": "Il a sauté sur le quai."}, {"id": "g26", "cat": "其他常用動詞", "french": "voler", "chinese": "偷", "english": "to steal", "present": "je vole", "futur": "je vais voler", "pc": "j'ai volé", "imparfait": "je volais", "example": "On m'a volé mon sac."}, {"id": "g27", "cat": "其他常用動詞", "french": "ressentir", "chinese": "感受到", "english": "to feel", "present": "je ressens", "futur": "je vais ressentir", "pc": "j'ai ressenti", "imparfait": "je ressentais", "example": "Je ressens beaucoup de stress avant l'examen."}, {"id": "g28", "cat": "其他常用動詞", "french": "se calmer", "chinese": "使自己平靜", "english": "to calm down", "present": "je me calme", "futur": "je vais me calmer", "pc": "je me suis calmé(e)", "imparfait": "je me calmais", "example": "J'essaie de me calmer quand je suis stressé(e)."}, {"id": "g29", "cat": "其他常用動詞", "french": "se concentrer", "chinese": "專心", "english": "to concentrate", "present": "je me concentre", "futur": "je vais me concentrer", "pc": "je me suis concentré(e)", "imparfait": "je me concentrais", "example": "Je dois me concentrer sur mon travail."}, {"id": "g30", "cat": "其他常用動詞", "french": "surmonter", "chinese": "克服", "english": "to overcome", "present": "je surmonte", "futur": "je vais surmonter", "pc": "j'ai surmonté", "imparfait": "je surmontais", "example": "Je veux surmonter ma peur."}, {"id": "g31", "cat": "其他常用動詞", "french": "éviter", "chinese": "避免", "english": "to avoid", "present": "j'évite", "futur": "je vais éviter", "pc": "j'ai évité", "imparfait": "j'évitais", "example": "Il faut éviter de dormir trop tard."}, {"id": "g32", "cat": "其他常用動詞", "french": "vivre", "chinese": "生活", "english": "to live", "present": "je vis", "futur": "je vais vivre", "pc": "j'ai vécu", "imparfait": "je vivais", "example": "Je vis à Taïwan."}, {"id": "g33", "cat": "其他常用動詞", "french": "proposer", "chinese": "提出 / 提供", "english": "to offer / propose", "present": "je propose", "futur": "je vais proposer", "pc": "j'ai proposé", "imparfait": "je proposais", "example": "La SNCF propose plus de confort."}, {"id": "g34", "cat": "其他常用動詞", "french": "exclure", "chinese": "排除", "english": "to exclude", "present": "j'exclus", "futur": "je vais exclure", "pc": "j'ai exclu", "imparfait": "j'excluais", "example": "Ce billet exclut les enfants."}, {"id": "g35", "cat": "其他常用動詞", "french": "se multiplier", "chinese": "增多 / 變多", "english": "to multiply / increase", "present": "il se multiplie", "futur": "il va se multiplier", "pc": "il s'est multiplié", "imparfait": "il se multipliait", "example": "Les critiques se multiplient sur les réseaux sociaux."}, {"id": "g36", "cat": "其他常用動詞", "french": "être divisé(e)", "chinese": "意見分裂", "english": "to be divided (opinion)", "present": "il est divisé", "futur": "il va être divisé", "pc": "il a été divisé", "imparfait": "il était divisé", "example": "L'opinion est divisée sur ce sujet."}, {"id": "g37", "cat": "其他常用動詞", "french": "commander", "chinese": "點餐 / 訂購", "english": "to order", "present": "je commande", "futur": "je vais commander", "pc": "j'ai commandé", "imparfait": "je commandais", "example": "Je commande un café."}, {"id": "g38", "cat": "其他常用動詞", "french": "commenter", "chinese": "評論", "english": "to comment on", "present": "je commente", "futur": "je vais commenter", "pc": "j'ai commenté", "imparfait": "je commentais", "example": "Vous pouvez commenter le repas."}, {"id": "g39", "cat": "其他常用動詞", "french": "goûter", "chinese": "嚐一口", "english": "to taste", "present": "je goûte", "futur": "je vais goûter", "pc": "j'ai goûté", "imparfait": "je goûtais", "example": "Tu veux goûter ?"}, {"id": "g40", "cat": "其他常用動詞", "french": "tousser", "chinese": "咳嗽", "english": "to cough", "present": "je tousse", "futur": "je vais tousser", "pc": "j'ai toussé", "imparfait": "je toussais", "example": "Il tousse beaucoup."}, {"id": "g41", "cat": "其他常用動詞", "french": "éternuer", "chinese": "打噴嚏", "english": "to sneeze", "present": "j'éternue", "futur": "je vais éternuer", "pc": "j'ai éternué", "imparfait": "j'éternuais", "example": "Elle éternue souvent."}, {"id": "g42", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir faim", "chinese": "肚子餓", "english": "to be hungry", "present": "J'ai faim.", "futur": "Je vais avoir faim.", "pc": "J'ai eu faim.", "imparfait": "J'avais faim.", "example": "J'ai faim."}, {"id": "g43", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir soif", "chinese": "口渴", "english": "to be thirsty", "present": "J'ai soif.", "futur": "Je vais avoir soif.", "pc": "J'ai eu soif.", "imparfait": "J'avais soif.", "example": "J'ai soif."}, {"id": "g44", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir froid / chaud", "chinese": "冷 / 熱", "english": "to be cold / hot", "present": "J'ai froid.", "futur": "Je vais avoir froid.", "pc": "J'ai eu froid.", "imparfait": "J'avais froid.", "example": "J'ai froid."}, {"id": "g45", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir sommeil", "chinese": "想睡", "english": "to be sleepy", "present": "J'ai sommeil.", "futur": "Je vais avoir sommeil.", "pc": "J'ai eu sommeil.", "imparfait": "J'avais sommeil.", "example": "J'ai sommeil."}, {"id": "g46", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir peur de", "chinese": "害怕", "english": "to be afraid of", "present": "J'ai peur des araignées.", "futur": "Je vais avoir peur.", "pc": "J'ai eu peur.", "imparfait": "J'avais peur.", "example": "J'ai peur des araignées."}, {"id": "g47", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir besoin de", "chinese": "需要", "english": "to need", "present": "J'ai besoin de toi.", "futur": "Je vais avoir besoin de toi.", "pc": "J'ai eu besoin de toi.", "imparfait": "J'avais besoin de toi.", "example": "J'ai besoin de toi."}, {"id": "g48", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir envie de", "chinese": "想要 / 想做", "english": "to feel like (doing)", "present": "J'ai envie de dormir.", "futur": "Je vais avoir envie de dormir.", "pc": "J'ai eu envie de dormir.", "imparfait": "J'avais envie de dormir.", "example": "J'ai envie de dormir."}, {"id": "g49", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir mal à", "chinese": "...疼痛", "english": "to have pain in", "present": "J'ai mal à la tête.", "futur": "Je vais avoir mal à la tête.", "pc": "J'ai eu mal à la tête.", "imparfait": "J'avais mal à la tête.", "example": "J'ai mal à la tête."}, {"id": "g50", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir raison", "chinese": "說對了", "english": "to be right", "present": "Tu as raison.", "futur": "Tu vas avoir raison.", "pc": "Tu as eu raison.", "imparfait": "Tu avais raison.", "example": "Tu as raison."}, {"id": "g51", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir tort", "chinese": "說錯了", "english": "to be wrong", "present": "Tu as tort.", "futur": "Tu vas avoir tort.", "pc": "Tu as eu tort.", "imparfait": "Tu avais tort.", "example": "Tu as tort."}, {"id": "g52", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir de la chance", "chinese": "幸運", "english": "to be lucky", "present": "J'ai de la chance.", "futur": "Je vais avoir de la chance.", "pc": "J'ai eu de la chance.", "imparfait": "J'avais de la chance.", "example": "J'ai de la chance."}, {"id": "g53", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir l'air + adj.", "chinese": "看起來 / 好像", "english": "to look / seem", "present": "Tu as l'air fatigué.", "futur": "Tu vas avoir l'air fatigué.", "pc": "Tu as eu l'air fatigué.", "imparfait": "Tu avais l'air fatigué.", "example": "Tu as l'air fatigué."}, {"id": "g54", "cat": "Avoir_Être_Faire_Prendre句型", "french": "avoir du mal à + inf.", "chinese": "做某事有困難", "english": "to have trouble doing sth.", "present": "J'ai du mal à comprendre.", "futur": "Je vais avoir du mal à comprendre.", "pc": "J'ai eu du mal à comprendre.", "imparfait": "J'avais du mal à comprendre.", "example": "J'ai du mal à comprendre."}, {"id": "g55", "cat": "Avoir_Être_Faire_Prendre句型", "french": "être content(e) de", "chinese": "開心", "english": "to be happy about", "present": "Je suis content(e) de te voir.", "futur": "Je vais être content(e).", "pc": "J'ai été content(e).", "imparfait": "J'étais content(e).", "example": "Je suis content(e) de te voir."}, {"id": "g56", "cat": "Avoir_Être_Faire_Prendre句型", "french": "être malade", "chinese": "生病", "english": "to be sick", "present": "Je suis malade.", "futur": "Je vais être malade.", "pc": "J'ai été malade.", "imparfait": "J'étais malade.", "example": "Je suis malade."}, {"id": "g57", "cat": "Avoir_Être_Faire_Prendre句型", "french": "être en forme", "chinese": "狀態好", "english": "to be in good shape", "present": "Je suis en forme.", "futur": "Je vais être en forme.", "pc": "J'ai été en forme.", "imparfait": "J'étais en forme.", "example": "Je suis en forme."}, {"id": "g58", "cat": "Avoir_Être_Faire_Prendre句型", "french": "tomber malade", "chinese": "生病了 / 病倒 (強調從健康變生病)", "english": "to fall ill", "present": "Il tombe malade.", "futur": "Il va tomber malade.", "pc": "Il est tombé malade.", "imparfait": "--", "example": "Il tombe malade."}, {"id": "g59", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire attention", "chinese": "小心", "english": "to pay attention / be careful", "present": "Je fais attention.", "futur": "Je vais faire attention.", "pc": "J'ai fait attention.", "imparfait": "Je faisais attention.", "example": "Je fais attention."}, {"id": "g60", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire la cuisine", "chinese": "做飯", "english": "to cook", "present": "Je fais la cuisine le soir.", "futur": "Je vais faire la cuisine.", "pc": "J'ai fait la cuisine.", "imparfait": "Je faisais la cuisine.", "example": "Je fais la cuisine le soir."}, {"id": "g61", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire le ménage", "chinese": "打掃", "english": "to do housework", "present": "Je fais le ménage.", "futur": "Je vais faire le ménage.", "pc": "J'ai fait le ménage.", "imparfait": "Je faisais le ménage.", "example": "Je fais le ménage."}, {"id": "g62", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire la lessive", "chinese": "洗衣服", "english": "to do laundry", "present": "Je fais la lessive.", "futur": "Je vais faire la lessive.", "pc": "J'ai fait la lessive.", "imparfait": "Je faisais la lessive.", "example": "Je fais la lessive."}, {"id": "g63", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire la vaisselle", "chinese": "洗碗", "english": "to do the dishes", "present": "Je fais la vaisselle.", "futur": "Je vais faire la vaisselle.", "pc": "J'ai fait la vaisselle.", "imparfait": "Je faisais la vaisselle.", "example": "Je fais la vaisselle."}, {"id": "g64", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire les courses", "chinese": "買菜 / 採買", "english": "to go grocery shopping", "present": "Je fais les courses.", "futur": "Je vais faire les courses.", "pc": "J'ai fait les courses.", "imparfait": "Je faisais les courses.", "example": "Je fais les courses."}, {"id": "g65", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire du sport", "chinese": "運動", "english": "to play sports", "present": "Je fais du sport deux fois par semaine.", "futur": "Je vais faire du sport.", "pc": "J'ai fait du sport.", "imparfait": "Je faisais du sport.", "example": "Je fais du sport deux fois par semaine."}, {"id": "g66", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire une promenade", "chinese": "散步", "english": "to take a walk", "present": "Je fais une promenade.", "futur": "Je vais faire une promenade.", "pc": "J'ai fait une promenade.", "imparfait": "Je faisais une promenade.", "example": "Je fais une promenade."}, {"id": "g67", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire une erreur", "chinese": "犯錯", "english": "to make a mistake", "present": "Je fais une erreur.", "futur": "Je vais faire une erreur.", "pc": "J'ai fait une erreur.", "imparfait": "Je faisais une erreur.", "example": "Je fais une erreur."}, {"id": "g68", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire la fête", "chinese": "聚會 / 慶祝", "english": "to party", "present": "Je fais la fête.", "futur": "Je vais faire la fête.", "pc": "J'ai fait la fête.", "imparfait": "Je faisais la fête.", "example": "Je fais la fête."}, {"id": "g69", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire un voyage", "chinese": "旅行", "english": "to take a trip", "present": "Je fais un voyage.", "futur": "Je vais faire un voyage.", "pc": "J'ai fait un voyage.", "imparfait": "Je faisais un voyage.", "example": "Je fais un voyage."}, {"id": "g70", "cat": "Avoir_Être_Faire_Prendre句型", "french": "faire la sieste", "chinese": "睡午覺", "english": "to take a nap", "present": "Je fais la sieste.", "futur": "Je vais faire la sieste.", "pc": "J'ai fait la sieste.", "imparfait": "Je faisais la sieste.", "example": "Je fais la sieste."}, {"id": "g71", "cat": "Avoir_Être_Faire_Prendre句型", "french": "prendre son temps", "chinese": "慢慢來 / 不急", "english": "to take one's time", "present": "Je prends mon temps.", "futur": "Je vais prendre mon temps.", "pc": "J'ai pris mon temps.", "imparfait": "Je prenais mon temps.", "example": "Je prends mon temps."}, {"id": "g72", "cat": "Avoir_Être_Faire_Prendre句型", "french": "prendre rendez-vous", "chinese": "預約", "english": "to make an appointment", "present": "Je prends rendez-vous.", "futur": "Je vais prendre rendez-vous.", "pc": "J'ai pris rendez-vous.", "imparfait": "Je prenais rendez-vous.", "example": "Je prends rendez-vous."}, {"id": "g73", "cat": "Avoir_Être_Faire_Prendre句型", "french": "prendre une décision", "chinese": "做決定", "english": "to make a decision", "present": "Je prends une décision.", "futur": "Je vais prendre une décision.", "pc": "J'ai pris une décision.", "imparfait": "Je prenais une décision.", "example": "Je prends une décision."}, {"id": "g74", "cat": "Avoir_Être_Faire_Prendre句型", "french": "prendre l'ascenseur / l'escalier", "chinese": "搭電梯 / 走樓梯", "english": "to take the elevator / stairs", "present": "Je prends l'ascenseur.", "futur": "Je vais prendre l'ascenseur.", "pc": "J'ai pris l'ascenseur.", "imparfait": "Je prenais l'ascenseur.", "example": "Je prends l'ascenseur."}];
+const GRAMMAR_DEFAULT = [{"id": "r1", "cat": "文法句型", "french": "il faut + infinitif", "chinese": "一般規則、客觀需要，沒有特定的人", "english": "general rule / necessity, no specific subject", "example": "Il faut chercher un stage."}, {"id": "r2", "cat": "文法句型", "french": "devoir + infinitif", "chinese": "強調某個人必須做某件事", "english": "emphasizes a specific person's obligation", "example": "Tu dois dormir tôt."}, {"id": "r3", "cat": "文法句型", "french": "ne...pas (passé composé)", "chinese": "否定 (沒有)", "english": "not", "example": "Je n'ai pas vu le voleur."}, {"id": "r4", "cat": "文法句型", "french": "ne...jamais", "chinese": "從來沒有", "english": "never", "example": "Je ne suis jamais allée en Italie."}, {"id": "r5", "cat": "文法句型", "french": "ne...plus", "chinese": "不再", "english": "no longer", "example": "Je ne bois plus de café."}, {"id": "r6", "cat": "文法句型", "french": "ne...rien", "chinese": "什麼都沒有", "english": "nothing", "example": "Je n'ai rien mangé."}, {"id": "r7", "cat": "文法句型", "french": "ne...que", "chinese": "只有、僅僅", "english": "only", "example": "Je n'ai vu que son dos."}, {"id": "r8", "cat": "文法句型", "french": "tout (代名詞)", "chinese": "全部", "english": "everything / all", "example": "J'ai tout perdu."}, {"id": "r9", "cat": "文法句型", "french": "Qu'est-ce qui se passe ?", "chinese": "發生什麼事了？(現在)", "english": "What's happening?", "example": "Qu'est-ce qui se passe ?"}, {"id": "r10", "cat": "文法句型", "french": "Qu'est-ce qui s'est passé ?", "chinese": "發生了什麼事？(過去)", "english": "What happened?", "example": "Qu'est-ce qui s'est passé ?"}, {"id": "r11", "cat": "文法句型", "french": "Qu'est-ce que c'est ?", "chinese": "這是什麼？", "english": "What is it?", "example": "Qu'est-ce que c'est ?"}, {"id": "r12", "cat": "文法句型", "french": "Qu'est-ce qu'il y a ?", "chinese": "怎麼了／有什麼事？", "english": "What's wrong? / What is there?", "example": "Qu'est-ce qu'il y a ?"}, {"id": "r13", "cat": "文法句型", "french": "depuis + 時間 + 現在式", "chinese": "已經...了 (現在仍在進行)", "english": "since / for (ongoing action)", "example": "J'apprends le français depuis un an."}, {"id": "r14", "cat": "文法句型", "french": "il y a + 時間 (+ passé composé)", "chinese": "...之前 (過去發生的事)", "english": "ago", "example": "Je suis allée à Paris il y a deux ans."}, {"id": "r15", "cat": "文法句型", "french": "pendant + 時間", "chinese": "持續...時間，通常已經結束", "english": "during / for (completed duration)", "example": "J'ai voyagé pendant une semaine."}, {"id": "r16", "cat": "文法句型", "french": "dans + 時間", "chinese": "...之後 (未來)", "english": "in (a future time)", "example": "Je vais partir dans deux jours."}, {"id": "r17", "cat": "文法句型", "french": "avant de + infinitif", "chinese": "...之前", "english": "before (doing sth.)", "example": "Je vais manger avant de partir."}, {"id": "r18", "cat": "文法句型", "french": "après", "chinese": "...之後", "english": "after", "example": "Après, nous sommes allés à la plage."}, {"id": "r19", "cat": "文法句型", "french": "jusqu'à", "chinese": "直到", "english": "until", "example": "J'ai travaillé jusqu'à minuit."}, {"id": "r20", "cat": "文法句型", "french": "plus / moins / autant...que", "chinese": "比較句 (更多／更少／一樣多)", "english": "comparison (more / less / as...as)", "example": "Tu es plus âgé que moi."}, {"id": "r21", "cat": "文法句型", "french": "passé composé vs imparfait", "chinese": "passé composé＝已結束的單一動作；imparfait＝描述場景、狀態、習慣", "english": "p.c. = completed action; imparfait = description / background / habit", "example": "Je lisais quand il est arrivé."}];
+const ARTICLES_DEFAULT = [{"id": "a1", "title": "Une journée typique（日常作息）", "text": "Je m'appelle Maggie. Voici ma journée typique. Le matin, je me réveille à sept heures et je me lève tout de suite. Je me douche, puis je m'habille. Ensuite, je prends mon petit-déjeuner et je pars pour l'université. À midi, je déjeune avec mes amis à la fac. L'après-midi, j'ai des cours et je travaille sur mes projets. Le soir, je rentre chez moi vers dix-neuf heures. Je fais la cuisine, je dîne et je regarde un peu la télévision. Avant de me coucher, je révise mon vocabulaire de français. Je me couche vers minuit parce que j'ai beaucoup de travail. Demain, je vais me lever encore plus tôt !"}, {"id": "a2", "title": "Je suis malade（生病）", "text": "Depuis deux jours, je ne suis pas en forme. J'ai mal à la gorge et j'ai un peu de fièvre. Hier soir, j'ai commencé à tousser et j'avais le nez qui coule. Ce matin, je me sens très fatiguée, alors je décide de rester à la maison. Je prends des médicaments et je bois beaucoup d'eau chaude. Mon amie me dit : « Il faut aller chez le médecin si tu ne vas pas mieux demain. » Je pense qu'elle a raison. Je vais aussi dormir tôt ce soir pour bien me reposer. J'espère que je n'aurai plus de fièvre demain matin, parce que j'ai un entretien important après-demain !"}, {"id": "a3", "title": "Chercher un stage en France（找實習）", "text": "Je cherche un stage de six mois en France. C'est un peu stressant, mais je suis motivée ! Chaque jour, je regarde des offres sur Internet et j'envoie mon CV et ma lettre de motivation. La semaine dernière, une entreprise à Paris m'a contactée pour un entretien. J'étais très contente, mais aussi un peu angoissée parce que mon français n'est pas encore parfait. Avant l'entretien, j'ai révisé mes réponses et j'ai demandé des conseils à mon professeur. Pendant l'entretien, j'ai parlé de mon expérience professionnelle à Taïwan et de mon mandarin natif. À la fin, la responsable m'a dit qu'elle allait me recontacter dans une semaine. Maintenant, j'attends la réponse avec impatience !"}, {"id": "a4", "title": "Le temps qu'il fait（天氣與旅行）", "text": "Ce week-end, je vais voyager à Nice avec deux amies. Avant de partir, je regarde la météo. Vendredi, il va faire beau et il va y avoir du soleil : parfait pour la plage ! Mais samedi, il va pleuvoir un peu et il va faire plus frais. Nous devons donc prendre un parapluie et une veste. Dimanche, le temps va être nuageux, mais il ne va pas faire froid. Je suis très contente parce que je n'ai jamais visité le sud de la France. J'ai envie de me promener au bord de la mer et de goûter la cuisine locale. J'espère qu'il ne va pas pleuvoir toute la journée !"}, {"id": "a5", "title": "Faire du shopping（買衣服）", "text": "Il fait de plus en plus froid, alors je décide de faire du shopping. Je vais dans un grand magasin près de chez moi. J'ai besoin d'un manteau chaud, d'une écharpe et de nouvelles chaussures. Dans le magasin, une vendeuse me demande : « Je peux vous aider ? » Je réponds que je cherche un manteau noir, pas trop cher. Elle me propose plusieurs modèles. J'essaie une veste bleue, mais elle est trop petite. Finalement, je trouve un joli manteau gris qui me va très bien. Je l'achète avec ma carte de crédit. Je suis contente de mon shopping, mais j'ai dépensé plus d'argent que prévu !"}, {"id": "a6", "title": "Un nouvel appartement（新公寓）", "text": "La semaine dernière, j'ai emménagé dans un nouvel appartement près de la fac. Il y a une chambre, une petite cuisine et une salle de bains. Il n'y a pas d'ascenseur, alors je dois prendre l'escalier tous les jours — c'est bon pour le sport ! Mon appartement est un peu petit, mais il est calme et lumineux. Le premier jour, j'ai rangé mes affaires et j'ai fait le ménage. Mes nouveaux voisins sont très gentils ; ils m'ont invitée à prendre un café. Maintenant, je me sens vraiment chez moi. J'ai hâte de recevoir mes amis dans mon nouveau logement !"}].map(a => ({...a, type:'text'}));
+const LINKS_DEFAULT = [
+  {id:'l1', type:'link', title:'Le français facile avec RFI', source:'RFI', url:'https://francaisfacile.rfi.fr/',
+   desc:'RFI 電台每天推出的簡化版新聞，用字淺顯、附文字稿與音檔，是最常被推薦給 A2～B1 學習者的新聞資源。'},
+  {id:'l2', type:'link', title:'Bonjour de France－A2 閱讀練習', source:'Bonjour de France', url:'https://www.bonjourdefrance.com/exercices-de-francais/niveau-a2/',
+   desc:'專為法語學習者設計的分級閱讀網站，A2 分類下有大量短文，讀完文章可直接做線上測驗題。'},
+  {id:'l3', type:'link', title:'TV5MONDE－Apprendre le français', source:'TV5MONDE', url:'https://apprendre.tv5monde.com/fr',
+   desc:'法國電視台 TV5MONDE 的學習平台，用真實影片、報導搭配分級練習（A1–B2），影片旁通常附文字稿。'},
+  {id:'l4', type:'link', title:'1jour1actu', source:'1jour1actu', url:'https://www.1jour1actu.com/',
+   desc:'給法國小朋友看的新聞網站，用詞簡單、句子短，很適合 A2 程度的成人學習者拿來練閱讀。'},
+  {id:'l5', type:'link', title:'Le Point du FLE－閱讀理解練習彙整', source:'lepointdufle.net', url:'https://www.lepointdufle.net/p/comprehension-ecrite.htm',
+   desc:'一個整理各種法語學習網站閱讀理解練習連結的入口網站，可以依主題或程度找更多短文。'},
+];
+
+/* ================= STORAGE ================= */
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let customVocab = LS.get('fr_customVocab', []);
+let customArticles = LS.get('fr_customArticles', []);
+let notesStore = LS.get('fr_notes', {});          // {articleId: [{quote,note,ts}]}
+let progress = LS.get('fr_progress', {});          // {id: {box, due, seen, correct, wrong}}
+let quizHistory = LS.get('fr_quizHistory', {played:0, correct:0, total:0});
+let prefs = LS.get('fr_prefs', {ignoreAccents:false});
+
+function saveAll(){
+  LS.set('fr_customVocab', customVocab);
+  LS.set('fr_customArticles', customArticles);
+  LS.set('fr_notes', notesStore);
+  LS.set('fr_progress', progress);
+  LS.set('fr_quizHistory', quizHistory);
+  LS.set('fr_prefs', prefs);
+}
+
+function allVocab(){ return [...VOCAB_DEFAULT, ...customVocab]; }
+function allArticles(){ return [...ARTICLES_DEFAULT, ...LINKS_DEFAULT, ...customArticles]; }
+function allPoolForPractice(source){
+  // source: 'vocab' | 'verb' | 'all'
+  if(source==='vocab') return allVocab().map(x=>({...x, kind:'vocab'}));
+  if(source==='verb') return [...VERB_DEFAULT.map(x=>({...x, kind:'verb'})), ...GRAMMAR_DEFAULT.map(x=>({...x, kind:'grammar'}))];
+  return [...allVocab().map(x=>({...x, kind:'vocab'})), ...VERB_DEFAULT.map(x=>({...x, kind:'verb'})), ...GRAMMAR_DEFAULT.map(x=>({...x, kind:'grammar'}))];
+}
+function vocabCategories(){ return [...new Set(VOCAB_DEFAULT.map(x=>x.cat))]; }
+
+/* ================= NAV ================= */
+function switchTab(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.getElementById('view-'+tab).classList.remove('hidden');
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  const titles = {cards:['字卡學習','點卡片翻面，左右滑動切換'], practice:['拼寫練習','聽寫／填空／造句'],
+    reading:['文章閱讀','選取文字即可加筆記'], quiz:['選擇題測驗','即時批改與解析'], me:['我的學習','資料管理與統計']};
+  document.getElementById('topTitle').textContent = titles[tab][0];
+  document.getElementById('topSub').textContent = titles[tab][1];
+  if(tab==='cards') renderCards();
+  if(tab==='practice') renderPractice();
+  if(tab==='reading') renderReadingList();
+  if(tab==='quiz') renderQuizSetup();
+  if(tab==='me') renderMe();
+}
+document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+
+function openModal(html){
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalBg').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); }
+document.getElementById('modalBg').addEventListener('click', e=>{ if(e.target.id==='modalBg') closeModal(); });
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function normalizeStr(s, ignoreAccents){
+  s = (s||'').trim().toLowerCase();
+  s = s.replace(/[.。,，!！?？;；:：]+$/g, '');   // 句尾標點不計較
+  s = s.replace(/[.。,，!！?？;；:：]/g, '');      // 句中標點也去掉
+  s = s.replace(/\s+/g, ' ').trim();               // 多餘空白
+  if(ignoreAccents) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return s;
+}
+
+/* ============================================================
+   1) FLASHCARDS
+   ============================================================ */
+let cardState = { pool: [], idx: 0, flipped: false, filterCat: 'ALL' };
+
+function dueList(){
+  const today = new Date().toISOString().slice(0,10);
+  return allVocab().filter(w => {
+    const p = progress[w.id];
+    if(!p) return true;
+    return p.due <= today;
+  });
+}
+function buildCardPool(){
+  let pool;
+  if(cardState.filterCat==='ALL') pool = allVocab();
+  else if(cardState.filterCat==='DUE') pool = dueList();
+  else if(cardState.filterCat==='NEW') pool = customVocab;
+  else pool = allVocab().filter(w=>w.cat===cardState.filterCat);
+  cardState.pool = shuffle(pool);
+  cardState.idx = 0; cardState.flipped = false;
+}
+
+function renderCards(){
+  if(cardState.pool.length===0) buildCardPool();
+  const cats = vocabCategories();
+  let chips = `<div class="chip ${cardState.filterCat==='ALL'?'active':''}" onclick="setCardFilter('ALL')">全部 (${allVocab().length})</div>
+    <div class="chip ${cardState.filterCat==='DUE'?'active':''}" onclick="setCardFilter('DUE')">待複習 (${dueList().length})</div>
+    <div class="chip ${cardState.filterCat==='NEW'?'active':''}" onclick="setCardFilter('NEW')">我新增的 (${customVocab.length})</div>`;
+  cats.forEach(c=>{ chips += `<div class="chip ${cardState.filterCat===c?'active':''}" onclick="setCardFilter('${escapeHtml(c)}')">${escapeHtml(c)}</div>`; });
+
+  let body;
+  if(cardState.pool.length===0){
+    body = `<div class="empty-hint">這個分類目前沒有單字，換一個分類看看，或到「我的」新增單字。</div>`;
+  } else {
+    const w = cardState.pool[cardState.idx];
+    body = `
+    <div class="flash-wrap">
+      <div class="flash-progress">${cardState.idx+1} / ${cardState.pool.length}　${escapeHtml(w.cat)}</div>
+      <div class="flashcard" id="flipcard" onclick="flipCard()">
+        <div class="pos-tag">${escapeHtml(w.pos||w.type||'')}</div>
+        ${!cardState.flipped ? `
+          <div class="fr-word">${escapeHtml(w.french)}</div>
+          <div class="flip-hint">👆 點擊看意思</div>
+        ` : `
+          <div class="fr-word" style="font-size:20px;">${escapeHtml(w.french)}</div>
+          <div class="back">${escapeHtml(w.chinese)}<br>${escapeHtml(w.english)}</div>
+          ${w.example?`<div class="example">${escapeHtml(w.example)}</div>`:''}
+        `}
+      </div>
+      <div class="flash-audio-row" id="flashAudioRow">
+        <button class="btn btn-outline" onclick="flashSpeak()">🔊 播放發音</button>
+        <button class="btn btn-outline" id="pronounceBtn" onclick="flashPronounce()">🎤 練習發音</button>
+      </div>
+      <div id="pronounceResult"></div>
+      <div class="flash-actions">
+        <button class="btn btn-bad" onclick="gradeCard(false)">😕 不熟</button>
+        <button class="btn btn-good" onclick="gradeCard(true)">😀 記住了</button>
+      </div>
+      <div class="flash-nav">
+        <button onclick="stepCard(-1)">‹</button>
+        <button onclick="flipCard()" style="font-size:14px;">🔄 翻面</button>
+        <button onclick="stepCard(1)">›</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('view-cards').innerHTML = `<div class="chip-row">${chips}</div>` + body +
+    `<button class="fab" onclick="openAddWordModal()">＋</button>`;
+  attachSwipe(document.getElementById('flipcard'));
+}
+function setCardFilter(c){ cardState.filterCat = c; buildCardPool(); renderCards(); }
+function flipCard(){ cardState.flipped = !cardState.flipped; renderCards(); }
+function stepCard(dir){
+  if(cardState.pool.length===0) return;
+  cardState.idx = (cardState.idx + dir + cardState.pool.length) % cardState.pool.length;
+  cardState.flipped = false; renderCards();
+}
+function gradeCard(good){
+  const w = cardState.pool[cardState.idx];
+  if(!w) return;
+  const p = progress[w.id] || {box:1, seen:0, correct:0, wrong:0};
+  p.seen++;
+  if(good){ p.correct++; p.box = Math.min(5, p.box+1); } else { p.wrong++; p.box = 1; }
+  const intervals = [0,1,3,7,16,30];
+  const d = new Date(); d.setDate(d.getDate() + intervals[p.box-1]);
+  p.due = d.toISOString().slice(0,10);
+  progress[w.id] = p;
+  saveAll();
+  stepCard(1);
+}
+function attachSwipe(el){
+  if(!el) return;
+  let x0=null;
+  el.addEventListener('touchstart', e=>{ x0=e.touches[0].clientX; }, {passive:true});
+  el.addEventListener('touchend', e=>{
+    if(x0===null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if(Math.abs(dx) > 60){ stepCard(dx<0?1:-1); }
+    x0=null;
+  }, {passive:true});
+}
+
+/* ---- 發音播放 & 發音評分（字卡） ---- */
+function flashSpeak(){
+  const w = cardState.pool[cardState.idx];
+  if(w) speakFr(w.french);
+}
+function levenshtein(a,b){
+  const m=a.length, n=b.length;
+  const dp = Array.from({length:m+1}, ()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function similarity(a,b){
+  const dist = levenshtein(a,b);
+  const maxLen = Math.max(a.length, b.length, 1);
+  return 1 - dist/maxLen;
+}
+function flashPronounce(){
+  const w = cardState.pool[cardState.idx];
+  if(!w) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const resultDiv = document.getElementById('pronounceResult');
+  const btn = document.getElementById('pronounceBtn');
+  if(!SR){
+    if(resultDiv) resultDiv.innerHTML = `<div class="feedback no">⚠️ 這個瀏覽器不支援語音辨識。建議用 iPhone Safari 或 Android Chrome 開啟本 App 試試。</div>`;
+    return;
+  }
+  const rec = new SR();
+  rec.lang = 'fr-FR';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  if(btn){ btn.textContent = '🎙️ 聆聽中...請說出這個字'; btn.classList.add('listening'); }
+  if(resultDiv) resultDiv.innerHTML = '';
+  rec.onresult = (e) => {
+    const said = e.results[0][0].transcript;
+    const score = similarity(normalizeStr(said, true), normalizeStr(w.french, true));
+    let msg, cls;
+    if(score >= 0.85){ msg = `✅ 很棒！辨識到你說的是「${escapeHtml(said)}」，跟「${escapeHtml(w.french)}」很接近`; cls='ok'; }
+    else if(score >= 0.5){ msg = `🟡 有點接近～辨識到「${escapeHtml(said)}」，目標是「${escapeHtml(w.french)}」，再多練習幾次`; cls='no'; }
+    else { msg = `❌ 辨識到「${escapeHtml(said)}」，跟「${escapeHtml(w.french)}」差蠻多的，點🔊聽正確發音再試一次`; cls='no'; }
+    if(resultDiv) resultDiv.innerHTML = `<div class="feedback ${cls}">${msg}</div>`;
+  };
+  rec.onerror = (e) => {
+    if(resultDiv) resultDiv.innerHTML = `<div class="feedback no">⚠️ 錄音發生問題（${escapeHtml(e.error||'')}），請確認已允許麥克風權限</div>`;
+  };
+  rec.onend = () => { if(btn){ btn.textContent = '🎤 練習發音'; btn.classList.remove('listening'); } };
+  try{ rec.start(); }catch(err){ if(resultDiv) resultDiv.innerHTML = `<div class="feedback no">⚠️ 無法啟動錄音，請再試一次</div>`; }
+}
+
+function openAddWordModal(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ 新增單字</h3>
+
+    <label class="field-label">📷 拍照 / 選圖辨識文字（選填）</label>
+    <input type="file" accept="image/*" capture="environment" id="ocrFile">
+    <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="runOcr()">開始辨識文字</button>
+    <div id="ocrStatus" style="font-size:12px; color:var(--muted); margin-top:6px;"></div>
+    <textarea id="ocrResult" rows="3" placeholder="辨識結果會顯示在這裡，可自行修改，再按下方按鈕填入欄位" style="margin-top:6px;"></textarea>
+    <div class="btn-row" style="margin-top:6px;">
+      <button class="btn btn-ghost" onclick="document.getElementById('nwFr').value = document.getElementById('ocrResult').value.trim();">↓ 填入法文欄位</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('nwCn').value = document.getElementById('ocrResult').value.trim();">↓ 填入中文欄位</button>
+    </div>
+    <div style="font-size:11px; color:var(--muted); margin:6px 0 14px;">＊對印刷體文字辨識效果較好，手寫字不一定準確，請自行核對修改。第一次使用需要網路連線（下載辨識模型），之後功能都跟平常一樣可離線使用。</div>
+    <hr style="border:none; border-top:1px solid var(--border); margin-bottom:14px;">
+
+    <label class="field-label">法文</label><input type="text" id="nwFr" placeholder="ex. la bibliothèque">
+    <label class="field-label">詞性 (可留空)</label><input type="text" id="nwPos" placeholder="n.f. / v. / adj. ...">
+    <label class="field-label">中文</label><input type="text" id="nwCn" placeholder="圖書館">
+    <label class="field-label">英文解釋</label><input type="text" id="nwEn" placeholder="library">
+    <label class="field-label">例句 (可留空)</label><input type="text" id="nwEx" placeholder="Je vais à la bibliothèque.">
+    <label class="field-label">分類</label>
+    <select id="nwCat">${vocabCategories().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}<option value="我新增的單字">我新增的單字</option></select>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveNewWord()">儲存</button>
+    </div>
+  `);
+}
+let ocrLoaded = false;
+function loadTesseract(cb){
+  if(window.Tesseract){ ocrLoaded = true; cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js';
+  s.onload = () => { ocrLoaded = true; cb(); };
+  s.onerror = () => {
+    const status = document.getElementById('ocrStatus');
+    if(status) status.textContent = '⚠️ 無法載入辨識功能，請確認網路連線後再試一次';
+  };
+  document.head.appendChild(s);
+}
+function runOcr(){
+  const fileInput = document.getElementById('ocrFile');
+  const file = fileInput && fileInput.files[0];
+  if(!file){ alert('請先拍照或選一張圖片'); return; }
+  const status = document.getElementById('ocrStatus');
+  status.textContent = ocrLoaded ? '辨識中...' : '載入辨識引擎中...（需要網路，第一次會比較久）';
+  loadTesseract(() => {
+    status.textContent = '辨識中... 0%';
+    window.Tesseract.recognize(file, 'fra+eng', {
+      logger: m => { if(m.status==='recognizing text' && status) status.textContent = '辨識中... ' + Math.round((m.progress||0)*100) + '%'; }
+    }).then(({data:{text}}) => {
+      document.getElementById('ocrResult').value = (text||'').trim();
+      status.textContent = text && text.trim() ? '✅ 辨識完成！請檢查文字，再填入下方欄位' : '沒有辨識到文字，換一張清楚一點的照片試試';
+    }).catch(() => {
+      status.textContent = '⚠️ 辨識失敗，請確認網路連線或換一張照片';
+    });
+  });
+}
+function saveNewWord(){
+  const fr = document.getElementById('nwFr').value.trim();
+  const cn = document.getElementById('nwCn').value.trim();
+  if(!fr || !cn){ alert('至少要填法文與中文喔'); return; }
+  const item = {
+    id: 'c' + Date.now(),
+    cat: document.getElementById('nwCat').value,
+    french: fr,
+    pos: document.getElementById('nwPos').value.trim(),
+    chinese: cn,
+    english: document.getElementById('nwEn').value.trim(),
+    example: document.getElementById('nwEx').value.trim(),
+  };
+  customVocab.push(item);
+  saveAll();
+  closeModal();
+  cardState.pool=[];
+  renderCards();
+}
+
+/* ============================================================
+   2) PRACTICE (dictation / fill-blank / sentence)
+   ============================================================ */
+let practiceState = { mode:'dictation', source:'vocab', current:null, revealed:false, streak:0 };
+
+function renderPractice(){
+  const html = `
+    <div class="chip-row">
+      <div class="chip ${practiceState.mode==='dictation'?'active':''}" onclick="setPMode('dictation')">🔊 聽寫</div>
+      <div class="chip ${practiceState.mode==='fill'?'active':''}" onclick="setPMode('fill')">🔤 填空拼字</div>
+      <div class="chip ${practiceState.mode==='sentence'?'active':''}" onclick="setPMode('sentence')">✏️ 造句</div>
+    </div>
+    <div class="chip-row">
+      <div class="chip ${practiceState.source==='vocab'?'active':''}" onclick="setPSource('vocab')">單字庫</div>
+      <div class="chip ${practiceState.source==='verb'?'active':''}" onclick="setPSource('verb')">動詞句型庫</div>
+      <div class="chip ${practiceState.source==='all'?'active':''}" onclick="setPSource('all')">全部</div>
+    </div>
+    <div id="practiceBody" class="card"></div>
+    <div style="text-align:center; color:var(--muted); font-size:12px; margin-top:6px;">連續答對：${practiceState.streak} 🔥</div>
+  `;
+  document.getElementById('view-practice').innerHTML = html;
+  nextPracticeItem();
+}
+function setPMode(m){ practiceState.mode=m; renderPractice(); }
+function setPSource(s){ practiceState.source=s; renderPractice(); }
+
+function nextPracticeItem(){
+  const pool = allPoolForPractice(practiceState.source).filter(x=>x.french && x.french.length>0);
+  if(pool.length===0){ document.getElementById('practiceBody').innerHTML = '<div class="empty-hint">目前沒有可練習的內容</div>'; return; }
+  practiceState.current = pool[Math.floor(Math.random()*pool.length)];
+  practiceState.revealed = false;
+  renderPracticeBody();
+}
+function renderPracticeBody(){
+  const w = practiceState.current;
+  const box = document.getElementById('practiceBody');
+  if(!w) return;
+  if(practiceState.mode==='dictation'){
+    box.innerHTML = `
+      <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:8px;">聽發音，拼出正確的法文</div>
+      <button class="speaker-btn" onclick="speakFr('${escapeHtml(w.french).replace(/'/g,"\\'")}')">🔊</button>
+      <div class="practice-meaning">${escapeHtml(w.chinese||'')} ${w.english?('／ '+escapeHtml(w.english)):''}</div>
+      <input type="text" id="dictInput" placeholder="輸入聽到的法文..." autocomplete="off" autocapitalize="off">
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="revealAnswer()">顯示答案</button>
+        <button class="btn btn-primary" onclick="checkDictation()">送出</button>
+      </div>
+      <div id="pFeedback"></div>
+    `;
+  } else if(practiceState.mode==='fill'){
+    const disp = w.french.split('').map(ch=> ch===' '?'　':(/[a-zàâäéèêëïîôöùûüç'\-]/i.test(ch)?'＿':ch)).join(' ');
+    box.innerHTML = `
+      <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:8px;">依中英文提示，拼出完整法文單字</div>
+      <div class="practice-meaning" style="font-size:16px; font-weight:700; color:var(--text);">${escapeHtml(w.chinese||'')}</div>
+      <div class="practice-meaning">${escapeHtml(w.english||'')}</div>
+      <div class="blank-display">${disp}</div>
+      <input type="text" id="dictInput" placeholder="輸入完整法文..." autocomplete="off" autocapitalize="off">
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="hintLetter()">💡 提示第一個字母</button>
+        <button class="btn btn-primary" onclick="checkDictation()">送出</button>
+      </div>
+      <div id="pFeedback"></div>
+    `;
+  } else { // sentence
+    box.innerHTML = `
+      <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:8px;">用這個單字／句型，自己造一個法文句子</div>
+      <div class="practice-word">${escapeHtml(w.french)}</div>
+      <div class="practice-meaning">${escapeHtml(w.chinese||'')} ／ ${escapeHtml(w.english||'')}</div>
+      <textarea id="sentInput" rows="3" placeholder="在這裡寫下你的法文句子..."></textarea>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="checkSentence()">自我檢查</button>
+        <button class="btn btn-primary" onclick="revealExample()">顯示範例例句</button>
+      </div>
+      <div id="pFeedback"></div>
+      <div style="font-size:11.5px; color:var(--muted); margin-top:8px;">＊此功能非 AI 文法批改，僅提供簡單檢查與範例例句供你自行比對（App 為離線版，無法連線 AI 校正）。</div>
+    `;
+  }
+}
+function getFrenchVoices(){
+  if(!('speechSynthesis' in window)) return [];
+  return speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+}
+function pickBestFrenchVoice(voices){
+  if(!voices.length) return null;
+  // 常見系統內建的道地法文語音名稱關鍵字（依優先順序）
+  const preferred = ['thomas','audrey','amelie','amélie','aurelie','aurélie','chantal','celine','céline',
+    'virginie','marie','google français','google francais','microsoft henri','microsoft julie','ines'];
+  for(const key of preferred){
+    const found = voices.find(v => v.name.toLowerCase().includes(key));
+    if(found) return found;
+  }
+  const frFR = voices.find(v => v.lang.toLowerCase()==='fr-fr');
+  if(frFR) return frFR;
+  return voices[0];
+}
+function speakFr(text, rate){
+  if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音朗讀'); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR'; u.rate = rate || 0.85;
+  const voices = getFrenchVoices();
+  let voice = prefs.voiceName ? voices.find(v => v.name === prefs.voiceName) : null;
+  if(!voice) voice = pickBestFrenchVoice(voices);
+  if(voice) u.voice = voice;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+function populateVoiceSelect(){
+  const sel = document.getElementById('voiceSelect');
+  if(!sel) return;
+  const voices = getFrenchVoices();
+  if(voices.length===0){
+    sel.innerHTML = '<option value="">（目前找不到法文語音，稍後再開啟或安裝語音包後重試）</option>';
+    return;
+  }
+  sel.innerHTML = voices.map(v =>
+    `<option value="${escapeHtml(v.name)}" ${prefs.voiceName===v.name?'selected':''}>${escapeHtml(v.name)}（${escapeHtml(v.lang)}）</option>`
+  ).join('');
+  if(!prefs.voiceName || !voices.find(v=>v.name===prefs.voiceName)){
+    const best = pickBestFrenchVoice(voices);
+    if(best){ sel.value = best.name; prefs.voiceName = best.name; saveAll(); }
+  }
+}
+function saveVoiceChoice(){
+  const sel = document.getElementById('voiceSelect');
+  if(!sel) return;
+  prefs.voiceName = sel.value;
+  saveAll();
+}
+function testVoice(){
+  speakFr('Bonjour ! Je suis content de vous aider à apprendre le français.');
+}
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = () => populateVoiceSelect();
+}
+function levenshtein(a, b){
+  const m=a.length, n=b.length;
+  const dp = Array.from({length:m+1}, (_,i)=>[i, ...new Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function similarityScore(a, b){
+  a = normalizeStr(a, true); b = normalizeStr(b, true);
+  if(!a.length && !b.length) return 100;
+  const dist = levenshtein(a, b);
+  const maxLen = Math.max(a.length, b.length, 1);
+  return Math.max(0, Math.round((1 - dist/maxLen) * 100));
+}
+function hintLetter(){
+  const w = practiceState.current;
+  const inp = document.getElementById('dictInput');
+  if(inp && !inp.value) inp.value = w.french[0];
+}
+function checkDictation(){
+  const w = practiceState.current;
+  const val = document.getElementById('dictInput').value;
+  const ok = normalizeStr(val, prefs.ignoreAccents) === normalizeStr(w.french, prefs.ignoreAccents);
+  const fb = document.getElementById('pFeedback');
+  if(ok){
+    practiceState.streak++;
+    fb.innerHTML = `<div class="feedback ok">✅ 正確！${escapeHtml(w.french)}</div>`;
+    setTimeout(()=>{ nextPracticeItem(); document.querySelector('#view-practice > div:last-child').textContent = '連續答對：'+practiceState.streak+' 🔥'; }, 900);
+  } else {
+    practiceState.streak = 0;
+    fb.innerHTML = `<div class="feedback no">❌ 正確答案是：<b>${escapeHtml(w.french)}</b>（你輸入：${escapeHtml(val||'(空白)')}）</div>
+      <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">下一題</button>`;
+  }
+}
+function revealAnswer(){
+  const w = practiceState.current;
+  document.getElementById('pFeedback').innerHTML = `<div class="feedback ok">答案：<b>${escapeHtml(w.french)}</b></div>
+    <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">下一題</button>`;
+}
+function checkSentence(){
+  const w = practiceState.current;
+  const val = document.getElementById('sentInput').value.trim();
+  const fb = document.getElementById('pFeedback');
+  if(!val){ fb.innerHTML = `<div class="feedback no">先寫一句看看吧！</div>`; return; }
+  const stem = normalizeStr(w.french.split(' ')[0].replace(/^(se |s'|l'|le |la |les |un |une |des )/,''), true);
+  const hasWord = normalizeStr(val, true).includes(stem);
+  const longEnough = val.split(' ').length >= 3;
+  let msg = '';
+  if(hasWord && longEnough) msg = `<div class="feedback ok">✅ 看起來有包含目標字，句子長度也 OK！點「顯示範例例句」跟自己的句子比對文法。</div>`;
+  else if(!hasWord) msg = `<div class="feedback no">⚠️ 好像沒看到「${escapeHtml(w.french)}」這個字／字根，再檢查一下？</div>`;
+  else msg = `<div class="feedback no">⚠️ 句子可以再完整一點喔（至少主詞＋動詞）。</div>`;
+  fb.innerHTML = msg;
+}
+function revealExample(){
+  const w = practiceState.current;
+  const ex = w.example || w.present || '（此項目沒有附例句）';
+  document.getElementById('pFeedback').innerHTML = `<div class="feedback ok">📘 範例例句：<br><b>${escapeHtml(ex)}</b></div>
+    <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">換下一個</button>`;
+}
+
+/* ============================================================
+   3) READING
+   ============================================================ */
+let readingState = { openId: null };
+
+function renderReadingList(){
+  const arts = allArticles();
+  let html = arts.map(a => {
+    const n = (notesStore[a.id]||[]).length;
+    const meta = a.type==='link' ? `🔗 外部連結・${escapeHtml(a.source||'')}　·　${n} 則筆記` : `${a.text.length} 字　·　${n} 則筆記`;
+    return `<div class="article-item" onclick="openArticle('${a.id}')">
+      <div class="t">${a.type==='link'?'🔗 ':''}${escapeHtml(a.title)}</div>
+      <div class="meta">${meta}</div>
+    </div>`;
+  }).join('');
+  if(arts.length===0) html = '<div class="empty-hint">還沒有文章，點右下角＋新增一篇</div>';
+  document.getElementById('view-reading').innerHTML = html + `<button class="fab" onclick="openAddArticleModal()">＋</button>`;
+}
+
+function openArticle(id){
+  readingState.openId = id;
+  renderArticleDetail();
+}
+
+// Robust selection capture: listens globally, checks the selection sits inside #artText.
+// This works far more reliably on mobile than mouseup/touchend, which can fire before
+// the browser has finished resolving a drag-handle text selection.
+let selectionWatcherBound = false;
+function bindSelectionWatcher(){
+  if(selectionWatcherBound) return;
+  selectionWatcherBound = true;
+  document.addEventListener('selectionchange', () => {
+    const artText = document.getElementById('artText');
+    const quoteInput = document.getElementById('quoteInput');
+    if(!artText || !quoteInput) return;
+    const sel = window.getSelection();
+    if(!sel || sel.rangeCount === 0) return;
+    const text = sel.toString().trim();
+    if(!text) return;
+    const range = sel.getRangeAt(0);
+    if(artText.contains(range.commonAncestorContainer)){
+      quoteInput.value = text;
+    }
+  });
+}
+
+function renderArticleDetail(){
+  const a = allArticles().find(x=>x.id===readingState.openId);
+  if(!a){ renderReadingList(); return; }
+  const notes = notesStore[a.id] || [];
+  const isLink = a.type === 'link';
+  const html = `
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="readingState.openId=null; renderReadingList();">‹ 返回文章列表</button>
+    <h2 class="section-title">${escapeHtml(a.title)}</h2>
+    ${isLink ? `
+      <div class="card">
+        <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">來源：${escapeHtml(a.source||'')}</div>
+        <div style="font-size:13.5px; margin-bottom:12px; line-height:1.7;">${escapeHtml(a.desc||'')}</div>
+        <a class="btn btn-primary" style="display:block; text-align:center; text-decoration:none;" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">🔗 前往原文閱讀</a>
+      </div>
+    ` : `
+      <div class="article-body" id="artText">${escapeHtml(a.text)}</div>
+    `}
+    <div class="sel-panel">
+      <div>✏️ ${isLink? '讀完後，把想記錄的句子貼在下面（可直接從其他 App 貼上）' : '選取上方文字會自動帶入下面的引用欄，也可以直接手動輸入或貼上'}</div>
+      <label class="field-label" style="margin-top:8px;">引用句子（可留空）</label>
+      <input type="text" id="quoteInput" placeholder="要引用的句子...">
+      <label class="field-label">筆記內容</label>
+      <textarea id="noteInput" rows="2" placeholder="寫下你的筆記、文法問題、心得..."></textarea>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="addNoteFromSelection()">＋ 加筆記</button>
+    </div>
+    <h2 class="section-title">📌 筆記（${notes.length}）</h2>
+    <div id="noteList">
+      ${notes.length? notes.map((n,i)=>`
+        <div class="note-item">
+          <button class="del" onclick="deleteNote(${i})">刪除</button>
+          ${n.quote?`<div class="quote">「${escapeHtml(n.quote)}」</div>`:''}
+          <div class="txt">${escapeHtml(n.note)}</div>
+        </div>`).join('') : '<div class="empty-hint">還沒有筆記</div>'}
+    </div>
+  `;
+  document.getElementById('view-reading').innerHTML = html;
+  bindSelectionWatcher();
+}
+function addNoteFromSelection(){
+  const quote = document.getElementById('quoteInput').value.trim();
+  const note = document.getElementById('noteInput').value.trim();
+  if(!note){ alert('筆記內容不能是空的喔'); return; }
+  const id = readingState.openId;
+  if(!notesStore[id]) notesStore[id] = [];
+  notesStore[id].push({quote, note, ts: Date.now()});
+  saveAll();
+  renderArticleDetail();
+}
+function deleteNote(i){
+  notesStore[readingState.openId].splice(i,1);
+  saveAll();
+  renderArticleDetail();
+}
+function openAddArticleModal(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ 新增文章</h3>
+    <label class="field-label">標題</label><input type="text" id="artTitle" placeholder="文章標題">
+    <label class="field-label">內文（貼上文字即可）</label><textarea id="artBody" rows="8" placeholder="貼上法文文章內容..."></textarea>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveNewArticle()">儲存</button>
+    </div>
+  `);
+}
+function saveNewArticle(){
+  const title = document.getElementById('artTitle').value.trim();
+  const text = document.getElementById('artBody').value.trim();
+  if(!title || !text){ alert('標題與內文都要填喔'); return; }
+  customArticles.push({id:'ca'+Date.now(), title, text, type:'text'});
+  saveAll();
+  closeModal();
+  renderReadingList();
+}
+
+/* ============================================================
+   4) QUIZ
+   ============================================================ */
+let quizState = { questions:[], idx:0, score:0, wrong:[], answered:false };
+
+function renderQuizSetup(){
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="card">
+      <h2 class="section-title">測驗設定</h2>
+      <label class="field-label">題目來源</label>
+      <select id="qSource"><option value="vocab">單字庫</option><option value="verb">動詞句型庫</option><option value="all">全部</option></select>
+      <label class="field-label">分類（可選）</label>
+      <select id="qCat"><option value="ALL">不限分類</option>${vocabCategories().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+      <label class="field-label">出題方向</label>
+      <select id="qDir"><option value="fr2cn">看法文，選中／英文意思</option><option value="cn2fr">看中文，選法文</option></select>
+      <label class="field-label">題數</label>
+      <select id="qCount"><option value="5">5 題</option><option value="10" selected>10 題</option><option value="20">20 題</option></select>
+      <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="startQuiz()">開始測驗</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${quizHistory.played}</div><div class="lbl">已測驗題數</div></div>
+      <div class="stat-box"><div class="num">${quizHistory.total? Math.round(quizHistory.correct/quizHistory.total*100):0}%</div><div class="lbl">歷史正確率</div></div>
+    </div>
+  `;
+}
+function startQuiz(){
+  const source = document.getElementById('qSource').value;
+  const cat = document.getElementById('qCat').value;
+  const dir = document.getElementById('qDir').value;
+  const count = parseInt(document.getElementById('qCount').value);
+  let pool = allPoolForPractice(source).filter(x=>x.french && (x.chinese||x.english));
+  if(cat!=='ALL') pool = pool.filter(x=>x.cat===cat);
+  if(pool.length < 4){ alert('這個範圍的題目太少了（至少需要4個），換個範圍試試'); return; }
+  pool = shuffle(pool).slice(0, Math.min(count, pool.length));
+  quizState.questions = pool.map(w=>({item:w, dir}));
+  quizState.idx = 0; quizState.score = 0; quizState.wrong = []; quizState.answered=false;
+  renderQuiz();
+}
+function meaningOf(w){ return [w.chinese, w.english].filter(Boolean).join(' / '); }
+function renderQuiz(){
+  const q = quizState.questions[quizState.idx];
+  if(!q){ renderQuizResult(); return; }
+  const w = q.item;
+  const wholePool = allPoolForPractice('all');
+  let distractors = shuffle(wholePool.filter(x=>x.french!==w.french && (x.chinese||x.english))).slice(0,3);
+  const options = shuffle([w, ...distractors]);
+  const letters = ['A','B','C','D'];
+  const promptText = q.dir==='fr2cn' ? w.french : meaningOf(w);
+  quizState.answered = false;
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="quiz-meta"><span>第 ${quizState.idx+1} / ${quizState.questions.length} 題</span><span>得分 ${quizState.score}</span></div>
+    <div class="card">
+      <div class="quiz-q">${escapeHtml(promptText)}</div>
+      ${options.map((o,i)=>`<button class="quiz-opt" id="opt${i}" onclick="answerQuiz(${i})">
+        <span class="letter">${letters[i]}</span>${escapeHtml(q.dir==='fr2cn'? meaningOf(o) : o.french)}
+      </button>`).join('')}
+      <div id="quizFeedback"></div>
+    </div>
+  `;
+  quizState._correctIdx = options.findIndex(o=>o.french===w.french);
+  quizState._options = options;
+}
+function answerQuiz(i){
+  if(quizState.answered) return;
+  quizState.answered = true;
+  const correct = i === quizState._correctIdx;
+  const w = quizState.questions[quizState.idx].item;
+  document.getElementById('opt'+quizState._correctIdx).classList.add('correct');
+  if(!correct) document.getElementById('opt'+i).classList.add('wrong');
+  if(correct) quizState.score++;
+  else quizState.wrong.push(w);
+  quizHistory.played++; quizHistory.total++; if(correct) quizHistory.correct++;
+  saveAll();
+  const ex = w.example || w.present || '';
+  document.getElementById('quizFeedback').innerHTML = `
+    <div class="quiz-explain">${correct?'✅ 答對了！':'❌ 答錯了，正確答案已標綠。'}　
+    <b>${escapeHtml(w.french)}</b> — ${escapeHtml(meaningOf(w))}${ex?'<br>例句：'+escapeHtml(ex):''}</div>
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="nextQuiz()">${quizState.idx+1<quizState.questions.length?'下一題':'看結果'}</button>
+  `;
+}
+function nextQuiz(){ quizState.idx++; renderQuiz(); }
+function renderQuizResult(){
+  const total = quizState.questions.length;
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div style="font-size:15px; color:var(--muted);">測驗結果</div>
+      <div style="font-size:36px; font-weight:800; color:var(--primary-light); margin:8px 0;">${quizState.score} / ${total}</div>
+      <div style="color:var(--muted); font-size:13px;">正確率 ${Math.round(quizState.score/total*100)}%</div>
+    </div>
+    ${quizState.wrong.length? `<h2 class="section-title">答錯的題目</h2><div class="card">${quizState.wrong.map(w=>`
+      <div class="result-row"><span>${escapeHtml(w.french)}</span><span style="color:var(--muted);">${escapeHtml(meaningOf(w))}</span></div>
+    `).join('')}</div>` : ''}
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="renderQuizSetup()">回到測驗設定</button>
+  `;
+}
+
+/* ============================================================
+   5) ME / SETTINGS
+   ============================================================ */
+function renderMe(){
+  const mastered = Object.values(progress).filter(p=>p.box>=5).length;
+  document.getElementById('view-me').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${allVocab().length}</div><div class="lbl">單字總數</div></div>
+      <div class="stat-box"><div class="num">${customVocab.length}</div><div class="lbl">我新增的單字</div></div>
+      <div class="stat-box"><div class="num">${mastered}</div><div class="lbl">已熟記單字</div></div>
+      <div class="stat-box"><div class="num">${allArticles().length}</div><div class="lbl">文章篇數</div></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">🔊 語音朗讀設定</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">
+        如果目前的發音聽起來不夠道地，可以在這裡換一個手機內建的法文語音。清單內容依你手機系統安裝的語音而定。
+      </div>
+      <select id="voiceSelect" onchange="saveVoiceChoice()"></select>
+      <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="testVoice()">🔊 測試發音</button>
+      <div style="font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.6;">
+        找不到理想的聲音嗎？iPhone：「設定」→「輔助使用」→「朗讀內容」→「聲音」→下載更多法文語音；Android：「設定」→「文字轉語音輸出」→安裝法文語音包。裝好後回到這裡重新整理清單就會出現。
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">練習設定</h2>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13.5px;">
+        <input type="checkbox" id="ignoreAccentsChk" ${prefs.ignoreAccents?'checked':''} onchange="toggleIgnoreAccents()">
+        拼寫檢查時忽略重音符號（é/è/ê 視為相同）
+      </label>
+    </div>
+    <div class="card">
+      <h2 class="section-title">資料備份</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">
+        本 App 的資料（新增單字、文章、筆記、學習進度）都儲存在你手機瀏覽器的本機空間裡。清除瀏覽器資料會導致資料遺失，建議定期匯出備份。
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="exportBackup()">匯出備份</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">匯入備份</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importBackup(event)">
+    </div>
+    <div class="card">
+      <h2 class="section-title">加入手機主畫面</h2>
+      <div style="font-size:12.5px; color:var(--muted); line-height:1.7;">
+        iPhone：用 Safari 開啟此頁 → 按下方「分享」按鈕 → 「加入主畫面」<br>
+        Android：用 Chrome 開啟此頁 → 右上角選單 → 「新增至主畫面」<br>
+        加入後即可像 App 一樣點圖示開啟，離線也能使用（語音朗讀功能需要系統內建的法文語音）。
+      </div>
+    </div>
+    <div class="card">
+      <button class="btn btn-bad" style="width:100%;" onclick="resetProgress()">重設學習進度</button>
+    </div>
+  `;
+  populateVoiceSelect();
+}
+function toggleIgnoreAccents(){ prefs.ignoreAccents = document.getElementById('ignoreAccentsChk').checked; saveAll(); }
+function exportBackup(){
+  const data = {customVocab, customArticles, notesStore, progress, quizHistory, prefs, exportedAt: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'fr_app_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importBackup(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      customVocab = data.customVocab || [];
+      customArticles = data.customArticles || [];
+      notesStore = data.notesStore || {};
+      progress = data.progress || {};
+      quizHistory = data.quizHistory || {played:0,correct:0,total:0};
+      prefs = data.prefs || {ignoreAccents:false};
+      saveAll();
+      alert('匯入成功！');
+      renderMe();
+    }catch(err){ alert('檔案格式錯誤，匯入失敗'); }
+  };
+  reader.readAsText(file);
+}
+function resetProgress(){
+  if(!confirm('確定要清空所有學習進度（不包含新增的單字／文章）嗎？')) return;
+  progress = {}; quizHistory = {played:0,correct:0,total:0};
+  saveAll();
+  renderMe();
+}
+
+/* ================= INIT ================= */
+switchTab('cards');
+</script>
+</body>
+</html>
