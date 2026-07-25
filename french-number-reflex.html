@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiffres Express — 法文數字反應遊戲</title>
+<style>
+  :root{
+    --navy: #16223f;
+    --navy-deep: #0e1830;
+    --ivory: #f4ead8;
+    --amber: #e8b655;
+    --amber-dim: #a87f3a;
+    --red: #d9645f;
+    --green: #5aa787;
+    --tile: #1e2c52;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, var(--navy) 0%, var(--navy-deep) 70%);
+    color: var(--ivory);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 24px 14px 48px;
+  }
+  .app{ width:100%; max-width:520px; }
+
+  .brand{ text-align:center; margin-bottom:18px; }
+  .brand .title{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    letter-spacing: 0.06em;
+    font-size: clamp(26px, 7vw, 34px);
+    color: var(--amber);
+    text-transform: uppercase;
+  }
+  .brand .sub{
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ivory);
+    opacity:0.6;
+    text-transform: uppercase;
+    margin-top:2px;
+  }
+
+  .board{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background: var(--navy-deep);
+    border: 1px solid rgba(232,182,85,0.25);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .board .stat{ text-align:center; flex:1; }
+  .board .stat .num{
+    font-family: 'Courier New', monospace;
+    font-weight:700;
+    font-size: 20px;
+    color: var(--amber);
+    letter-spacing: 0.03em;
+  }
+  .board .stat .lbl{
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    opacity:0.55;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .lives{ display:flex; gap:5px; justify-content:center; margin-top:4px; }
+  .lives .dot{ width:9px; height:9px; border-radius:50%; background: var(--red); opacity:0.25; }
+  .lives .dot.on{ opacity:1; box-shadow:0 0 6px var(--red); }
+
+  .setup{ background: var(--tile); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .setup h3{
+    margin: 0 0 10px;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    opacity:0.9;
+  }
+  .choice-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip{
+    flex:1;
+    min-width: 90px;
+    background: rgba(244,234,216,0.06);
+    border: 1px solid rgba(244,234,216,0.15);
+    color: var(--ivory);
+    padding: 10px 8px;
+    border-radius: 8px;
+    text-align:center;
+    font-size: 13px;
+    cursor:pointer;
+    transition: all 0.15s;
+  }
+  .chip.active{ background: var(--amber); color: var(--navy-deep); border-color: var(--amber); font-weight:700; }
+  .chip .chip-note{ display:block; font-size:10px; opacity:0.65; margin-top:2px; font-weight:400; }
+
+  .voice-settings{ margin-bottom: 16px; }
+  .vs-label{
+    display:block; font-size: 12px; opacity:0.7; letter-spacing:0.05em;
+    margin-bottom: 6px; margin-top: 12px;
+  }
+  .vs-label:first-child{ margin-top:0; }
+  .vs-select{
+    width:100%; background: rgba(244,234,216,0.06); border: 1px solid rgba(244,234,216,0.18);
+    color: var(--ivory); padding: 9px 10px; border-radius: 8px; font-size: 13px;
+  }
+  .vs-select option{ background: var(--navy-deep); color: var(--ivory); }
+  .vs-range{
+    width:100%; accent-color: var(--amber); cursor:pointer;
+  }
+  .preview-btn{
+    width:100%; margin-top: 14px; background: rgba(232,182,85,0.12);
+    border: 1px solid var(--amber-dim); color: var(--amber); padding: 9px 12px;
+    border-radius: 20px; font-size: 13px; cursor:pointer;
+  }
+
+  .level-preview{ display:flex; flex-direction:column; gap:8px; margin-bottom: 6px; }
+  .level-card{
+    display:flex; justify-content:space-between; align-items:center;
+    background: rgba(244,234,216,0.05);
+    border: 1px solid rgba(244,234,216,0.1);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .level-card .lv-tag{ color: var(--amber); font-weight:700; margin-right:8px; }
+  .level-card .lv-range{ font-family:'Courier New', monospace; opacity:0.8; }
+
+  .mic-note{
+    font-size: 12px;
+    color: var(--amber);
+    opacity: 0.8;
+    margin: 10px 0 0;
+    line-height:1.5;
+    display:none;
+  }
+  .mic-note.show{ display:block; }
+  .mic-warning{
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 10px;
+    line-height:1.5;
+    display:none;
+  }
+  .mic-warning.show{ display:block; }
+
+  .start-btn{
+    width:100%; margin-top: 16px; padding: 14px; border-radius: 8px; border: none;
+    background: var(--amber); color: var(--navy-deep); font-weight: 700; font-size: 15px;
+    letter-spacing: 0.05em; cursor:pointer; text-transform: uppercase;
+  }
+  .start-btn:active{ transform: scale(0.98); }
+
+  .game{ display:none; position:relative; }
+  .game.active{ display:block; }
+  .setup.hidden{ display:none; }
+
+  .progress-line{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size: 11px; letter-spacing:0.08em; text-transform:uppercase;
+    opacity:0.75; margin-bottom:8px; gap:10px;
+  }
+  .progress-info{ opacity:0.8; }
+  .exit-btn{
+    flex-shrink:0;
+    background: rgba(217,100,95,0.12);
+    border: 1px solid rgba(217,100,95,0.4);
+    color: var(--red);
+    padding: 5px 10px;
+    border-radius: 14px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    opacity: 1;
+  }
+  .exit-btn:active{ transform: scale(0.96); }
+
+  .exit-confirm{
+    position:absolute; inset:0; background: rgba(14,24,48,0.97); border-radius:14px;
+    display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center;
+    padding: 24px; z-index: 6;
+  }
+  .exit-confirm.show{ display:flex; }
+  .exit-confirm .ec-title{ font-size: 17px; color: var(--ivory); font-weight:700; margin-bottom:4px; }
+  .exit-confirm .ec-sub{ font-size: 12px; opacity:0.6; margin-bottom:18px; }
+  .exit-confirm .ec-row{ display:flex; gap:10px; width:100%; max-width:280px; }
+  .exit-confirm button{
+    flex:1; padding: 11px; border-radius: 8px; border: none; font-size: 13px;
+    font-weight:700; cursor:pointer; letter-spacing:0.03em;
+  }
+  .ec-cancel{ background: rgba(244,234,216,0.1); color: var(--ivory); }
+  .ec-confirm{ background: var(--red); color: white; }
+
+  .speed-row{
+    display:flex; align-items:center; gap:8px; margin-bottom: 12px;
+  }
+  .speed-icon{ font-size: 13px; opacity:0.6; flex-shrink:0; }
+  .speed-value{
+    font-family:'Courier New', monospace; font-size: 11px; opacity:0.7;
+    min-width: 42px; text-align:right; flex-shrink:0;
+  }
+  .speed-row .vs-range{ flex:1; }
+
+  .timer-track{ height: 6px; background: rgba(244,234,216,0.1); border-radius: 3px; overflow:hidden; margin-bottom: 18px; }
+  .timer-track.hidden{ display:none; }
+  .timer-fill{ height:100%; background: var(--amber); width:100%; transition: width 0.1s linear, background 0.2s; }
+
+  .prompt-zone{
+    background: var(--navy-deep); border-radius: 14px; padding: 34px 20px; text-align:center;
+    margin-bottom: 20px; border: 1px solid rgba(232,182,85,0.2); position:relative;
+  }
+  .prompt-number{
+    font-family: 'Courier New', monospace; font-weight:700;
+    font-size: clamp(36px, 12vw, 64px); color: var(--amber); letter-spacing: 0.03em;
+  }
+  .prompt-hint{ font-size: 12px; opacity:0.5; letter-spacing:0.1em; text-transform:uppercase; margin-top:6px; }
+  .replay-btn{
+    margin-top: 14px; background: rgba(232,182,85,0.12); border: 1px solid var(--amber-dim);
+    color: var(--amber); padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor:pointer;
+  }
+
+  .options{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .options.stacked{ grid-template-columns: 1fr; }
+  .opt-btn{
+    background: var(--tile); border: 1px solid rgba(244,234,216,0.12); color: var(--ivory);
+    padding: 18px 10px; border-radius: 10px; font-size: clamp(16px, 5vw, 20px); font-weight: 600;
+    cursor:pointer; transition: all 0.15s; font-family: 'Courier New', monospace;
+  }
+  .opt-btn.word{ font-family: Georgia, serif; font-size: clamp(12px, 3.4vw, 16px); line-height: 1.35; padding: 14px 12px; }
+  .opt-btn:active{ transform: scale(0.97); }
+  .opt-btn.correct{ background: var(--green); border-color: var(--green); color: white; }
+  .opt-btn.wrong{ background: var(--red); border-color: var(--red); color: white; }
+  .opt-btn.disabled{ pointer-events:none; opacity:0.5; }
+
+  .speech-panel{ display:none; text-align:center; }
+  .speech-panel.active{ display:block; }
+  .mic-btn{
+    width: 88px; height: 88px; border-radius: 50%; border: none;
+    background: var(--amber); color: var(--navy-deep); font-size: 34px;
+    cursor:pointer; box-shadow: 0 0 0 0 rgba(232,182,85,0.5);
+  }
+  .mic-btn.listening{ background: var(--red); animation: pulse 1.2s infinite; }
+  .mic-btn:disabled{ opacity:0.5; cursor:default; }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(217,100,95,0.55); }
+    70%{ box-shadow: 0 0 0 18px rgba(217,100,95,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(217,100,95,0); }
+  }
+  .mic-status{ margin-top: 14px; font-size: 13px; opacity:0.75; min-height:18px; }
+  .mic-heard{ margin-top: 6px; font-size: 13px; opacity:0.55; font-style: italic; min-height:16px; }
+
+  .feedback{ text-align:center; min-height: 20px; font-size: 13px; margin-top: 12px; letter-spacing: 0.05em; opacity: 0.85; }
+
+  .level-transition{
+    position:absolute; inset:0; background: rgba(14,24,48,0.96); border-radius:14px;
+    display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center;
+    padding: 20px; z-index: 5;
+  }
+  .level-transition.show{ display:flex; }
+  .level-transition .lt-title{ font-size: 22px; color: var(--amber); font-weight:700; margin-bottom:6px; }
+  .level-transition .lt-sub{ font-size: 13px; opacity:0.7; }
+
+  .end-screen{ display:none; text-align:center; }
+  .end-screen.active{ display:block; }
+  .end-screen .end-title{ font-size: 22px; color: var(--amber); font-weight:700; margin-bottom: 4px; }
+  .end-screen .end-score{ font-family:'Courier New', monospace; font-size: 40px; font-weight:700; margin: 10px 0; }
+  .missed-list{
+    text-align:left; background: var(--tile); border-radius: 10px; padding: 14px 16px;
+    margin: 16px 0; font-size: 13px; max-height: 180px; overflow-y:auto;
+  }
+  .missed-list .row{ display:flex; justify-content:space-between; padding: 5px 0; border-bottom: 1px solid rgba(244,234,216,0.08); }
+  .missed-list .row:last-child{ border-bottom:none; }
+  .missed-list .empty{ opacity:0.5; text-align:center; padding:8px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand">
+    <div class="title">Chiffres Express</div>
+    <div class="sub">法文數字反應遊戲 · 三關闖關</div>
+  </div>
+
+  <div class="board">
+    <div class="stat"><div class="num" id="levelVal">–</div><div class="lbl">關卡</div></div>
+    <div class="stat"><div class="num" id="scoreVal">0</div><div class="lbl">分數</div></div>
+    <div class="stat"><div class="num" id="streakVal">0</div><div class="lbl">連續</div></div>
+    <div class="stat"><div class="lives" id="livesRow"></div><div class="lbl">生命</div></div>
+  </div>
+
+  <div class="setup" id="setupPanel">
+    <h3>遊戲模式</h3>
+    <div class="choice-row" id="modeRow">
+      <div class="chip active" data-mode="listen">🔊 聽音辨數</div>
+      <div class="chip" data-mode="word">🔤 看數選詞</div>
+      <div class="chip" data-mode="speech">🎤 語音辨識<span class="chip-note">練習說</span></div>
+    </div>
+
+    <h3>發音設定</h3>
+    <div class="voice-settings">
+      <label class="vs-label" for="voiceSelect">朗讀語者</label>
+      <select id="voiceSelect" class="vs-select"></select>
+
+      <label class="vs-label" for="rateSlider">語速　<span id="rateLabel">正常</span></label>
+      <input type="range" id="rateSlider" class="vs-range" min="0.55" max="1.25" step="0.05" value="0.85">
+
+      <button class="preview-btn" id="previewBtn">🔊 試聽發音</button>
+    </div>
+
+    <h3>關卡設定（自動闖關，每關 10 題）</h3>
+    <div class="level-preview">
+      <div class="level-card"><span><span class="lv-tag">第一關</span>暖身</span><span class="lv-range">1 – 100</span></div>
+      <div class="level-card"><span><span class="lv-tag">第二關</span>百 / 千</span><span class="lv-range">101 – 9,999</span></div>
+      <div class="level-card"><span><span class="lv-tag">第三關</span>萬 / 十萬</span><span class="lv-range">10,000 – 999,999</span></div>
+    </div>
+
+    <div class="mic-note" id="micNote">🎤 語音辨識模式會請求麥克風權限，請對著麥克風唸出畫面上數字的法文唸法。建議使用 Chrome 桌面版以獲得最佳辨識效果；若在嵌入式預覽中無法取得麥克風，可將此檔案另存後用瀏覽器直接開啟。</div>
+    <div class="mic-warning" id="micWarning">⚠️ 目前瀏覽器不支援語音辨識（建議使用電腦版 Chrome），請改選其他模式。</div>
+
+    <button class="start-btn" id="startBtn">開始遊戲</button>
+  </div>
+
+  <div class="game" id="gamePanel">
+    <div class="level-transition" id="levelTransition">
+      <div class="lt-title" id="ltTitle">🎉 過關！</div>
+      <div class="lt-sub" id="ltSub">準備進入下一關...</div>
+    </div>
+
+    <div class="exit-confirm" id="exitConfirm">
+      <div class="ec-title">要離開這場遊戲嗎？</div>
+      <div class="ec-sub">目前分數 <span id="ecScore">0</span> 分將不會被保留</div>
+      <div class="ec-row">
+        <button class="ec-cancel" id="ecCancel">繼續遊戲</button>
+        <button class="ec-confirm" id="ecConfirm">確定退出</button>
+      </div>
+    </div>
+
+    <div class="progress-line">
+      <span class="progress-info"><span id="levelLabel">第一關 · 1–100</span> · <span id="questionCounter">1 / 10</span></span>
+      <button class="exit-btn" id="exitBtn" title="退出遊戲">✕ 退出</button>
+    </div>
+
+    <div class="speed-row" id="speedRow">
+      <span class="speed-icon">🐢</span>
+      <input type="range" id="gameRateSlider" class="vs-range" min="0.55" max="1.25" step="0.05" value="0.85">
+      <span class="speed-icon">🐇</span>
+      <span class="speed-value" id="gameRateLabel">0.85x</span>
+    </div>
+
+    <div class="timer-track" id="timerTrack"><div class="timer-fill" id="timerFill"></div></div>
+
+    <div class="prompt-zone">
+      <div class="prompt-number" id="promptNumber">—</div>
+      <div class="prompt-hint" id="promptHint">聽發音，選出正確數字</div>
+      <button class="replay-btn" id="replayBtn">🔊 重播發音</button>
+    </div>
+
+    <div class="options" id="optionsGrid"></div>
+
+    <div class="speech-panel" id="speechPanel">
+      <button class="mic-btn" id="micBtn">🎤</button>
+      <div class="mic-status" id="micStatus">點擊麥克風，唸出這個數字的法文</div>
+      <div class="mic-heard" id="micHeard"></div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <div class="end-title" id="endTitle">遊戲結束</div>
+    <div class="end-score" id="endScore">0</div>
+    <div style="opacity:0.6; font-size:13px;">最高連續答對：<span id="endStreak">0</span></div>
+    <div class="missed-list" id="missedList"></div>
+    <button class="start-btn" id="restartBtn">再玩一次</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- French number generation (0-999,999) ----------
+  const units = ["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf",
+                  "dix","onze","douze","treize","quatorze","quinze","seize",
+                  "dix-sept","dix-huit","dix-neuf"];
+  const tensWord = {20:"vingt",30:"trente",40:"quarante",50:"cinquante",60:"soixante"};
+
+  function numberToFrench99(n, final){
+    if(n < 20) return units[n];
+    if(n < 70){
+      const base = Math.floor(n/10)*10;
+      const rem = n % 10;
+      if(rem === 0) return tensWord[base];
+      if(rem === 1) return tensWord[base] + " et un";
+      return tensWord[base] + "-" + units[rem];
+    }
+    if(n < 80){
+      const rem = n - 60;
+      if(rem === 11) return "soixante et onze";
+      return "soixante-" + units[rem];
+    }
+    if(n < 90){
+      const rem = n - 80;
+      if(rem === 0) return final ? "quatre-vingts" : "quatre-vingt";
+      return "quatre-vingt-" + units[rem];
+    }
+    const rem = n - 80;
+    return "quatre-vingt-" + units[rem];
+  }
+  function hundredsToFrench(n, final){
+    const h = Math.floor(n/100), r = n % 100;
+    if(h === 0) return numberToFrench99(r, final);
+    let hStr = (h === 1) ? "cent" : (units[h] + " cent" + ((r === 0 && final) ? "s" : ""));
+    if(r === 0) return hStr;
+    return hStr + " " + numberToFrench99(r, final);
+  }
+  function numberToFrench(n){
+    if(n === 0) return "zéro";
+    const th = Math.floor(n/1000), rem = n % 1000;
+    let out = "";
+    if(th > 0) out = (th === 1) ? "mille" : (hundredsToFrench(th, false) + " mille");
+    if(rem > 0){
+      const remStr = hundredsToFrench(rem, true);
+      out = out ? out + " " + remStr : remStr;
+    }
+    return out;
+  }
+
+  // normalize a spoken/typed French phrase for lenient comparison
+  function normalizeSpeech(s){
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s-]/g,'')
+      .split(/[\s-]+/)
+      .map(w => w.replace(/s$/,''))
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  // ---------- Levels ----------
+  const LEVELS = [
+    { label: "第一關 · 暖身", range: "1 – 100", min: 1, max: 100 },
+    { label: "第二關 · 百 / 千", range: "101 – 9,999", min: 101, max: 9999 },
+    { label: "第三關 · 萬 / 十萬", range: "10,000 – 999,999", min: 10000, max: 999999 }
+  ];
+  const QUESTIONS_PER_LEVEL = 10;
+
+  // ---------- State ----------
+  let mode = "listen";
+  let levelIndex = 0, questionInLevel = 0;
+  let score = 0, streak = 0, bestStreak = 0, lives = 3;
+  let currentTarget = null;
+  let timerInterval = null;
+  let timeLeft = 0, timeTotal = 5000;
+  let missed = [];
+  let frenchVoices = [];
+  let selectedVoiceIndex = 0;
+  let speechRate = 0.85;
+  let recognition = null;
+  let recognizing = false;
+
+  // ---------- Voice output (TTS) ----------
+  const voiceSelect = document.getElementById('voiceSelect');
+  const rateSlider = document.getElementById('rateSlider');
+  const rateLabel = document.getElementById('rateLabel');
+  const previewBtn = document.getElementById('previewBtn');
+
+  function loadVoice(){
+    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    frenchVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+    populateVoiceSelect();
+  }
+  function pickDefaultVoiceIndex(){
+    // prefer Google's French voice — generally the clearest/most natural
+    // option available in Chrome/ChromeOS/Android's built-in voice list
+    let idx = frenchVoices.findIndex(v => /google/i.test(v.name) && v.lang && v.lang.toLowerCase() === 'fr-fr');
+    if(idx === -1) idx = frenchVoices.findIndex(v => /google/i.test(v.name));
+    if(idx === -1) idx = frenchVoices.findIndex(v => v.lang && v.lang.toLowerCase() === 'fr-fr');
+    if(idx === -1) idx = 0;
+    return idx;
+  }
+
+  function populateVoiceSelect(){
+    if(!voiceSelect) return;
+    const prev = voiceSelect.value;
+    voiceSelect.innerHTML = '';
+    if(frenchVoices.length === 0){
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '（尚未偵測到法文語音，將使用系統預設）';
+      voiceSelect.appendChild(opt);
+      return;
+    }
+    frenchVoices.forEach((v,i)=>{
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = v.name + (v.lang ? ' · ' + v.lang : '');
+      voiceSelect.appendChild(opt);
+    });
+    const restoreIdx = (prev !== '' && parseInt(prev,10) < frenchVoices.length) ? parseInt(prev,10) : pickDefaultVoiceIndex();
+    voiceSelect.value = restoreIdx;
+    selectedVoiceIndex = restoreIdx;
+  }
+  if(window.speechSynthesis){
+    loadVoice();
+    speechSynthesis.onvoiceschanged = loadVoice;
+  }
+  if(voiceSelect){
+    voiceSelect.addEventListener('change', ()=>{
+      selectedVoiceIndex = parseInt(voiceSelect.value, 10) || 0;
+    });
+  }
+  function rateDescription(r){
+    if(r < 0.72) return '慢';
+    if(r > 1.0) return '快';
+    return '正常';
+  }
+  const gameRateSlider = document.getElementById('gameRateSlider');
+  const gameRateLabel = document.getElementById('gameRateLabel');
+  function syncRateUI(){
+    if(rateSlider) rateSlider.value = speechRate;
+    if(gameRateSlider) gameRateSlider.value = speechRate;
+    if(rateLabel) rateLabel.textContent = rateDescription(speechRate) + '（' + speechRate.toFixed(2) + 'x）';
+    if(gameRateLabel) gameRateLabel.textContent = speechRate.toFixed(2) + 'x';
+  }
+  if(rateSlider){
+    rateSlider.addEventListener('input', ()=>{
+      speechRate = parseFloat(rateSlider.value);
+      syncRateUI();
+    });
+  }
+  if(gameRateSlider){
+    gameRateSlider.addEventListener('input', ()=>{
+      speechRate = parseFloat(gameRateSlider.value);
+      syncRateUI();
+    });
+  }
+  syncRateUI();
+  if(previewBtn){
+    previewBtn.addEventListener('click', ()=>{
+      speakFrench('quatre-vingt-un, soixante-quinze, deux cent trente-quatre');
+    });
+  }
+
+  function speakFrench(text){
+    if(!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "fr-FR";
+    const voice = frenchVoices[selectedVoiceIndex];
+    if(voice) u.voice = voice;
+    u.rate = speechRate;
+    speechSynthesis.speak(u);
+  }
+
+  // ---------- Voice input (speech recognition) ----------
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micNote = document.getElementById('micNote');
+  const micWarning = document.getElementById('micWarning');
+
+  // ---------- DOM refs ----------
+  const setupPanel = document.getElementById('setupPanel');
+  const gamePanel = document.getElementById('gamePanel');
+  const endScreen = document.getElementById('endScreen');
+  const levelVal = document.getElementById('levelVal');
+  const scoreVal = document.getElementById('scoreVal');
+  const streakVal = document.getElementById('streakVal');
+  const livesRow = document.getElementById('livesRow');
+  const timerTrack = document.getElementById('timerTrack');
+  const speedRow = document.getElementById('speedRow');
+  const timerFill = document.getElementById('timerFill');
+  const promptNumber = document.getElementById('promptNumber');
+  const promptHint = document.getElementById('promptHint');
+  const replayBtn = document.getElementById('replayBtn');
+  const optionsGrid = document.getElementById('optionsGrid');
+  const speechPanel = document.getElementById('speechPanel');
+  const micBtn = document.getElementById('micBtn');
+  const micStatus = document.getElementById('micStatus');
+  const micHeard = document.getElementById('micHeard');
+  const feedback = document.getElementById('feedback');
+  const levelLabel = document.getElementById('levelLabel');
+  const questionCounter = document.getElementById('questionCounter');
+  const levelTransition = document.getElementById('levelTransition');
+  const ltTitle = document.getElementById('ltTitle');
+  const ltSub = document.getElementById('ltSub');
+  const exitBtn = document.getElementById('exitBtn');
+  const exitConfirm = document.getElementById('exitConfirm');
+  const ecCancel = document.getElementById('ecCancel');
+  const ecConfirm = document.getElementById('ecConfirm');
+  const ecScore = document.getElementById('ecScore');
+
+  document.querySelectorAll('#modeRow .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('#modeRow .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      mode = chip.dataset.mode;
+      micNote.classList.toggle('show', mode === 'speech');
+      micWarning.classList.toggle('show', mode === 'speech' && !SpeechRecognitionCtor);
+    });
+  });
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    if(mode === 'speech' && !SpeechRecognitionCtor){
+      micWarning.classList.add('show');
+      return;
+    }
+    startGame();
+  });
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    endScreen.classList.remove('active');
+    setupPanel.classList.remove('hidden');
+  });
+  replayBtn.addEventListener('click', ()=>{
+    if(currentTarget !== null) speakFrench(numberToFrench(currentTarget));
+  });
+
+  exitBtn.addEventListener('click', ()=>{
+    clearInterval(timerInterval);
+    ecScore.textContent = score;
+    exitConfirm.classList.add('show');
+  });
+  ecCancel.addEventListener('click', ()=>{
+    exitConfirm.classList.remove('show');
+    resumeTimer();
+  });
+  ecConfirm.addEventListener('click', ()=>{
+    quitGame();
+  });
+
+  function quitGame(){
+    clearInterval(timerInterval);
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    if(recognizing && recognition){
+      try{ recognition.stop(); }catch(e){}
+      recognizing = false;
+    }
+    exitConfirm.classList.remove('show');
+    levelTransition.classList.remove('show');
+    gamePanel.classList.remove('active');
+    endScreen.classList.remove('active');
+    setupPanel.classList.remove('hidden');
+  }
+
+  function renderLives(){
+    livesRow.innerHTML = '';
+    for(let i=0;i<3;i++){
+      const d = document.createElement('div');
+      d.className = 'dot' + (i < lives ? ' on' : '');
+      livesRow.appendChild(d);
+    }
+  }
+
+  function currentLevel(){ return LEVELS[levelIndex]; }
+
+  function startGame(){
+    score = 0; streak = 0; bestStreak = 0; lives = 3; missed = [];
+    levelIndex = 0; questionInLevel = 0;
+    scoreVal.textContent = '0';
+    streakVal.textContent = '0';
+    renderLives();
+    setupPanel.classList.add('hidden');
+    gamePanel.classList.add('active');
+    endScreen.classList.remove('active');
+
+    replayBtn.style.display = (mode === 'word') ? 'none' : 'inline-block';
+    replayBtn.textContent = (mode === 'speech') ? '🔊 聽範例發音' : '🔊 重播發音';
+    optionsGrid.style.display = (mode === 'speech') ? 'none' : 'grid';
+    speechPanel.classList.toggle('active', mode === 'speech');
+    timerTrack.classList.toggle('hidden', mode === 'speech');
+    speedRow.style.display = (mode === 'word') ? 'none' : 'flex';
+    syncRateUI();
+
+    if(mode === 'listen') promptHint.textContent = '聽發音，選出正確數字';
+    else if(mode === 'word') promptHint.textContent = '看數字，選出正確拼法';
+    else promptHint.textContent = '看數字，用法文唸出來';
+
+    nextRound();
+  }
+
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+  function pickDistractors(target){
+    const lv = currentLevel();
+    const set = new Set([target]);
+    const deltaMax = Math.max(12, Math.round((lv.max - lv.min) * 0.06));
+    let guard = 0;
+    while(set.size < 4 && guard < 200){
+      guard++;
+      const delta = randInt(-deltaMax, deltaMax);
+      let cand = target + delta;
+      if(cand < lv.min || cand > lv.max || cand === target) cand = randInt(lv.min, lv.max);
+      set.add(cand);
+    }
+    return Array.from(set).sort(()=>Math.random()-0.5);
+  }
+
+  function updateProgressLine(){
+    const lv = currentLevel();
+    levelLabel.textContent = lv.label + ' · ' + lv.range;
+    questionCounter.textContent = questionInLevel + ' / ' + QUESTIONS_PER_LEVEL;
+    levelVal.textContent = (levelIndex+1) + '/' + LEVELS.length;
+  }
+
+  function nextRound(){
+    questionInLevel++;
+    if(questionInLevel > QUESTIONS_PER_LEVEL){
+      levelComplete();
+      return;
+    }
+    updateProgressLine();
+    feedback.textContent = '';
+    micHeard.textContent = '';
+    micStatus.textContent = '點擊麥克風，唸出這個數字的法文';
+    micBtn.disabled = false;
+    micBtn.classList.remove('listening');
+
+    const lv = currentLevel();
+    currentTarget = randInt(lv.min, lv.max);
+
+    if(mode === 'speech'){
+      promptNumber.textContent = currentTarget.toLocaleString('fr-FR');
+      startTimer(true); // no visible bar, just internal pacing not needed; skip
+      return;
+    }
+
+    const opts = pickDistractors(currentTarget);
+    optionsGrid.innerHTML = '';
+    optionsGrid.classList.remove('stacked');
+
+    if(mode === 'listen'){
+      promptNumber.textContent = '🔊';
+      speakFrench(numberToFrench(currentTarget));
+      opts.forEach(n=>{
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.dataset.value = n;
+        btn.textContent = n.toLocaleString('fr-FR');
+        btn.addEventListener('click', ()=>handleAnswer(n === currentTarget, btn));
+        optionsGrid.appendChild(btn);
+      });
+    } else {
+      promptNumber.textContent = currentTarget.toLocaleString('fr-FR');
+      let maxLen = 0;
+      opts.forEach(n=>{
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn word';
+        btn.dataset.value = n;
+        const word = numberToFrench(n);
+        maxLen = Math.max(maxLen, word.length);
+        btn.textContent = word;
+        btn.addEventListener('click', ()=>handleAnswer(n === currentTarget, btn));
+        optionsGrid.appendChild(btn);
+      });
+      if(maxLen > 18) optionsGrid.classList.add('stacked');
+    }
+
+    const lv2 = currentLevel();
+    const magnitudeBonus = lv2.max >= 100000 ? 3200 : lv2.max >= 10000 ? 2200 : lv2.max >= 1000 ? 1400 : lv2.max >= 100 ? 700 : 0;
+    const baseTime = 10000 + magnitudeBonus;
+    const minTime = 7200 + Math.round(magnitudeBonus * 0.6);
+    timeTotal = Math.max(minTime, baseTime - streak*150);
+    timeLeft = timeTotal;
+    startTimer(false);
+  }
+
+  function startTimer(skip){
+    clearInterval(timerInterval);
+    if(skip) return; // speech mode: no countdown, user controls pacing
+    timerFill.style.background = 'var(--amber)';
+    timerFill.style.width = '100%';
+    runTimerLoop();
+  }
+
+  // resumes the countdown from the current timeLeft without resetting the bar
+  // (used when the player cancels the exit-confirm dialog)
+  function resumeTimer(){
+    clearInterval(timerInterval);
+    if(mode === 'speech' || timeLeft <= 0) return;
+    runTimerLoop();
+  }
+
+  function runTimerLoop(){
+    const stepMs = 100;
+    timerInterval = setInterval(()=>{
+      timeLeft -= stepMs;
+      const pct = Math.max(0, (timeLeft/timeTotal)*100);
+      timerFill.style.width = pct + '%';
+      if(pct < 25) timerFill.style.background = 'var(--red)';
+      if(timeLeft <= 0){
+        clearInterval(timerInterval);
+        handleAnswer(false, null, true); // timeout
+      }
+    }, stepMs);
+  }
+
+  function handleAnswer(isCorrect, btnEl, timedOut){
+    clearInterval(timerInterval);
+    if(optionsGrid.style.display !== 'none'){
+      const allBtns = optionsGrid.querySelectorAll('.opt-btn');
+      allBtns.forEach(b=>{
+        b.classList.add('disabled');
+        const val = parseInt(b.dataset.value, 10);
+        if(val === currentTarget) b.classList.add('correct');
+        else if(!isCorrect && btnEl === b) b.classList.add('wrong');
+      });
+    }
+
+    const frText = numberToFrench(currentTarget);
+    if(isCorrect){
+      const speedBonus = (mode === 'speech') ? 15 : Math.round((timeLeft/timeTotal)*50);
+      const streakBonus = streak*5;
+      score += 10 + speedBonus + streakBonus;
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      feedback.textContent = `✔ ${currentTarget.toLocaleString('fr-FR')} = ${frText}　+${10+speedBonus+streakBonus}`;
+      feedback.style.color = 'var(--green)';
+    } else {
+      lives--;
+      streak = 0;
+      missed.push({num: currentTarget, word: frText});
+      feedback.textContent = timedOut
+        ? `⏱ 時間到！正確答案：${currentTarget.toLocaleString('fr-FR')} = ${frText}`
+        : `✘ 正確答案：${currentTarget.toLocaleString('fr-FR')} = ${frText}`;
+      feedback.style.color = 'var(--red)';
+    }
+
+    scoreVal.textContent = score;
+    streakVal.textContent = streak;
+    renderLives();
+
+    setTimeout(()=>{
+      if(lives <= 0) endGame(false);
+      else nextRound();
+    }, 1200);
+  }
+
+  function levelComplete(){
+    if(levelIndex === LEVELS.length - 1){
+      endGame(true);
+      return;
+    }
+    ltTitle.textContent = '🎉 過關！' + currentLevel().label + ' 完成';
+    ltSub.textContent = '準備進入 ' + LEVELS[levelIndex+1].label + '...';
+    levelTransition.classList.add('show');
+    setTimeout(()=>{
+      levelTransition.classList.remove('show');
+      levelIndex++;
+      questionInLevel = 0;
+      nextRound();
+    }, 1800);
+  }
+
+  function endGame(victory){
+    gamePanel.classList.remove('active');
+    endScreen.classList.add('active');
+    document.getElementById('endTitle').textContent = victory ? '🏆 三關全破！' : '遊戲結束';
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('endStreak').textContent = bestStreak;
+    const list = document.getElementById('missedList');
+    list.innerHTML = '';
+    if(missed.length === 0){
+      list.innerHTML = '<div class="empty">全部答對，太厲害了！</div>';
+    } else {
+      missed.forEach(m=>{
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<span>${m.num.toLocaleString('fr-FR')}</span><span>${m.word}</span>`;
+        list.appendChild(row);
+      });
+    }
+  }
+
+  // ---------- Speech recognition wiring ----------
+  micBtn.addEventListener('click', ()=>{
+    if(!SpeechRecognitionCtor){
+      micStatus.textContent = '此瀏覽器不支援語音辨識，請改用電腦版 Chrome。';
+      return;
+    }
+    if(recognizing) return;
+    startListening();
+  });
+
+  function startListening(){
+    try{
+      recognition = new SpeechRecognitionCtor();
+      recognition.lang = 'fr-FR';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 5;
+      recognition.continuous = false;
+
+      recognizing = true;
+      micBtn.classList.add('listening');
+      micBtn.disabled = true;
+      micStatus.textContent = '🔴 聆聽中，請唸出數字...';
+      micHeard.textContent = '';
+
+      const safetyTimeout = setTimeout(()=>{
+        if(recognizing){
+          try{ recognition.stop(); }catch(e){}
+          micStatus.textContent = '沒有偵測到語音，請再點一次麥克風重試。';
+          resetMicUI();
+        }
+      }, 8000);
+
+      recognition.onresult = (event)=>{
+        clearTimeout(safetyTimeout);
+        const alternatives = Array.from(event.results[0]).map(r => r.transcript);
+        const target99 = normalizeSpeech(numberToFrench(currentTarget));
+        let matched = false;
+        let heard = alternatives[0] || '';
+
+        for(const alt of alternatives){
+          const digitsOnly = alt.replace(/[^0-9]/g,'');
+          const norm = normalizeSpeech(alt);
+          if(digitsOnly && parseInt(digitsOnly,10) === currentTarget){ matched = true; heard = alt; break; }
+          if(norm === target99){ matched = true; heard = alt; break; }
+        }
+
+        micHeard.textContent = '你說了：「' + heard + '」';
+        recognizing = false;
+        resetMicUI();
+        handleAnswer(matched, null, false);
+      };
+
+      recognition.onerror = (event)=>{
+        clearTimeout(safetyTimeout);
+        recognizing = false;
+        resetMicUI();
+        if(event.error === 'not-allowed' || event.error === 'service-not-allowed'){
+          micStatus.textContent = '⚠️ 無法取得麥克風權限，請允許權限後再試（部分嵌入式預覽環境可能無法授權，建議另存後在瀏覽器分頁開啟）。';
+        } else if(event.error === 'no-speech'){
+          micStatus.textContent = '沒有偵測到語音，請再點一次麥克風重試。';
+        } else {
+          micStatus.textContent = '語音辨識發生問題（' + event.error + '），請再試一次。';
+        }
+      };
+
+      recognition.onend = ()=>{ recognizing = false; };
+      recognition.start();
+    } catch(err){
+      recognizing = false;
+      resetMicUI();
+      micStatus.textContent = '此環境無法啟動語音辨識，建議在電腦版 Chrome 分頁中直接開啟此檔案再試。';
+    }
+  }
+
+  function resetMicUI(){
+    micBtn.classList.remove('listening');
+    micBtn.disabled = false;
+  }
+
+  renderLives();
+})();
+</script>
+</body>
+</html>
