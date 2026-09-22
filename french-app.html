@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="法文學習">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2E4A7D">
+<title>法文學習 App</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --primary:#2E4A7D; --primary-light:#4472C4; --accent:#C00000;
+  --bg:#F5F6FA; --card:#FFFFFF; --text:#1B1F27; --muted:#6B7280;
+  --good:#1E8E5A; --bad:#D33; --border:#E4E7EC;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+html,body{margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Helvetica Neue",Arial,sans-serif;}
+#app{display:flex; flex-direction:column; height:100vh; height:100dvh;}
+.topbar{background:var(--primary); color:#fff; padding:calc(10px + var(--safe-top)) 16px 12px;
+  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;}
+.topbar h1{font-size:17px; margin:0; font-weight:700;}
+.topbar .sub{font-size:11px; opacity:.75; margin-top:2px;}
+.icon-btn{background:rgba(255,255,255,.15); border:none; color:#fff; width:34px; height:34px; border-radius:10px; font-size:18px; display:flex; align-items:center; justify-content:center;}
+.view{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 14px 20px;}
+.view.hidden{display:none;}
+nav.tabbar{display:flex; background:#fff; border-top:1px solid var(--border); padding-bottom: var(--safe-bottom); flex-shrink:0;}
+nav.tabbar button{flex:1; background:none; border:none; padding:8px 2px 6px; display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--muted); font-size:10.5px; font-family:inherit;}
+nav.tabbar button .ic{font-size:20px;}
+nav.tabbar button.active{color:var(--primary-light); font-weight:700;}
+.card{background:var(--card); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+h2.section-title{font-size:15px; margin:4px 0 10px; color:var(--primary); font-weight:800;}
+.btn{border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;}
+.btn-primary{background:var(--primary-light); color:#fff;}
+.btn-outline{background:#fff; border:1.5px solid var(--primary-light); color:var(--primary-light);}
+.btn-ghost{background:var(--bg); color:var(--text);}
+.btn-good{background:var(--good); color:#fff;}
+.btn-bad{background:var(--bad); color:#fff;}
+.btn-row{display:flex; gap:8px;}
+.btn-row .btn{flex:1;}
+select, input[type=text], textarea{width:100%; border:1.5px solid var(--border); border-radius:10px; padding:10px; font-size:14px; font-family:inherit; background:#fff; color:var(--text);}
+textarea{resize:vertical;}
+label.field-label{font-size:12px; color:var(--muted); font-weight:700; margin:10px 0 4px; display:block;}
+.chip-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;}
+.chip{background:#fff; border:1.5px solid var(--border); border-radius:20px; padding:6px 12px; font-size:12.5px; color:var(--muted); cursor:pointer;}
+.chip.active{background:var(--primary-light); border-color:var(--primary-light); color:#fff; font-weight:700;}
+.empty-hint{color:var(--muted); font-size:13px; text-align:center; padding:30px 10px;}
+.fab{position:fixed; right:16px; bottom:calc(78px + var(--safe-bottom)); width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:26px; box-shadow:0 4px 10px rgba(0,0,0,.25); z-index:20;}
+.modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:flex-end; z-index:50;}
+.modal-bg.hidden{display:none;}
+.modal{background:#fff; width:100%; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(18px + var(--safe-bottom));}
+.modal h3{margin:0 0 10px; font-size:16px; color:var(--primary);}
+.modal-close{float:right; background:none; border:none; font-size:20px; color:var(--muted);}
+.flash-wrap{display:flex; flex-direction:column; align-items:center;}
+.flash-progress{font-size:12px; color:var(--muted); margin-bottom:8px;}
+.flashcard{width:100%; max-width:420px; min-height:230px; border-radius:18px; background:linear-gradient(160deg,#4472C4,#2E4A7D); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:26px 18px; text-align:center; box-shadow:0 6px 18px rgba(46,74,125,.35); position:relative; cursor:pointer;}
+.flashcard .pos-tag{position:absolute; top:12px; left:14px; font-size:11px; background:rgba(255,255,255,.2); padding:3px 9px; border-radius:20px;}
+.flashcard .fr-word{font-size:27px; font-weight:800; line-height:1.3;}
+.flashcard .back{margin-top:14px; font-size:15px; line-height:1.6;}
+.flashcard .example{margin-top:12px; font-size:12.5px; font-style:italic; opacity:.85; border-top:1px solid rgba(255,255,255,.3); padding-top:10px;}
+.flashcard .flip-hint{position:absolute; bottom:10px; font-size:10.5px; opacity:.65;}
+.flash-actions,.flash-audio-row{display:flex; gap:10px; width:100%; max-width:420px; margin-top:14px;}
+.flash-actions .btn{flex:1; padding:13px;}
+.flash-audio-row .btn{flex:1; padding:11px; font-size:13px;}
+.flash-audio-row .btn.listening{background:var(--accent); color:#fff; border-color:var(--accent);}
+.flash-nav{display:flex; gap:14px; margin-top:14px; align-items:center;}
+.flash-nav button{background:none; border:none; font-size:22px; color:var(--primary-light); cursor:pointer;}
+.practice-word{font-size:24px; font-weight:800; color:var(--primary); text-align:center; margin:6px 0 4px;}
+.practice-meaning{text-align:center; color:var(--muted); font-size:14px; margin-bottom:14px;}
+.blank-display{text-align:center; font-size:22px; letter-spacing:3px; font-weight:700; color:var(--primary); margin:12px 0;}
+.feedback{border-radius:10px; padding:10px 12px; font-size:13.5px; margin-top:10px;}
+.feedback.ok{background:#E3F5EC; color:var(--good);}
+.feedback.no{background:#FCE8E8; color:var(--bad);}
+.speaker-btn{display:block; margin:0 auto 14px; background:var(--primary-light); color:#fff; border:none; width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;}
+.article-item{background:#fff; border-radius:12px; padding:13px 14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer;}
+.article-item .t{font-weight:700; font-size:14.5px;}
+.article-item .meta{font-size:11.5px; color:var(--muted); margin-top:3px;}
+.article-body{background:#fff; border-radius:14px; padding:16px; font-size:15.5px; line-height:1.9; margin-bottom:14px; white-space:pre-wrap;}
+.sel-panel{background:#FFF8E6; border:1.5px dashed #E0B84A; border-radius:12px; padding:10px 12px; margin-bottom:14px; font-size:13px;}
+.note-item{background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.note-item .quote{font-size:12.5px; color:var(--primary-light); font-style:italic; border-left:3px solid var(--primary-light); padding-left:8px; margin-bottom:5px;}
+.note-item .txt{font-size:13.5px;}
+.note-item .del{float:right; color:var(--bad); font-size:12px; background:none; border:none;}
+.quiz-q{font-size:20px; font-weight:800; text-align:center; margin:10px 0 20px; color:var(--primary); line-height:1.5;}
+.quiz-opt{display:block; width:100%; text-align:left; background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:13px 14px; margin-bottom:10px; font-size:14.5px; cursor:pointer; font-family:inherit;}
+.quiz-opt .letter{display:inline-block; width:22px; height:22px; border-radius:50%; background:var(--bg); text-align:center; line-height:22px; font-size:12px; font-weight:700; margin-right:8px; color:var(--muted);}
+.quiz-opt.correct{background:#E3F5EC; border-color:var(--good);}
+.quiz-opt.wrong{background:#FCE8E8; border-color:var(--bad);}
+.quiz-meta{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px;}
+.quiz-explain{background:var(--bg); border-radius:10px; padding:10px 12px; font-size:13px; margin-top:8px; color:var(--muted);}
+.result-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:13.5px;}
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+.stat-box{background:#fff; border-radius:12px; padding:14px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.stat-box .num{font-size:24px; font-weight:800; color:var(--primary-light);}
+.stat-box .lbl{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.wg{background:#fff; border-radius:28px; display:flex; gap:10px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.12); margin-bottom:6px; min-height:180px;}
+.wg-left{width:34%; display:flex; flex-direction:column; justify-content:space-between; flex-shrink:0;}
+.wg-icon{width:42px; height:42px; border-radius:50%; background:#3478D4; display:flex; align-items:center; justify-content:center;}
+.wg-num{font-size:34px; font-weight:800; line-height:1; color:#000;}
+.wg-label{font-size:13px; font-weight:700; color:#3478D4; margin-top:3px; word-break:break-all; line-height:1.25;}
+.wg-right{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:space-between; gap:4px;}
+.wg-row{display:flex; align-items:center; gap:10px; min-height:34px;}
+.wg-circle{flex:0 0 24px; width:24px; height:24px; border:2px solid #777; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; cursor:pointer;}
+.wg-row.done .wg-circle{background:#3478D4; border-color:#3478D4;}
+.wg-row.done .wg-text{text-decoration:line-through; color:#999;}
+.wg-text{font-size:14.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; cursor:pointer; color:#111;}
+.wg-tools{display:flex; justify-content:flex-end; gap:16px; font-size:12px; color:var(--muted); margin:0 6px 12px;}
+.wg-tools span{cursor:pointer;}
+.tag-row{display:flex; align-items:center; gap:6px; padding:9px 0; border-bottom:1px solid var(--border);}
+.toast{position:fixed; left:50%; bottom:calc(90px + var(--safe-bottom)); transform:translateX(-50%); background:rgba(30,30,30,.9); color:#fff; padding:10px 16px; border-radius:12px; font-size:13px; z-index:99; max-width:86%; text-align:center; white-space:pre-line;}
+.fab.fab-secondary{bottom:calc(140px + var(--safe-bottom)); background:var(--primary-light); font-size:20px;}
+.demo-banner{background:#FFF3CD; color:#7A5A00; font-size:11.5px; text-align:center; padding:5px 8px; flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div>
+      <h1 id="topTitle">法文學習</h1>
+      <div class="sub" id="topSub"></div>
+    </div>
+    <button class="icon-btn" onclick="switchTab('me')">⚙️</button>
+  </div>
+  <div class="view" id="view-cards"></div>
+  <div class="view hidden" id="view-practice"></div>
+  <div class="view hidden" id="view-reading"></div>
+  <div class="view hidden" id="view-quiz"></div>
+  <div class="view hidden" id="view-me"></div>
+  <nav class="tabbar">
+    <button data-tab="cards" class="active"><span class="ic">🗂️</span>字卡</button>
+    <button data-tab="practice"><span class="ic">✍️</span>練習</button>
+    <button data-tab="reading"><span class="ic">📖</span>閱讀</button>
+    <button data-tab="quiz"><span class="ic">📝</span>測驗</button>
+    <button data-tab="me"><span class="ic">👤</span>我的</button>
+  </nav>
+  <div class="modal-bg hidden" id="modalBg"><div class="modal" id="modalBody"></div></div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const CAT_WORD='Glossika French單字', CAT_SENT='Glossika French句型';
+let _vi=0;
+const VOCAB_DEFAULT=[];
+function addV(cat,rows){ rows.forEach(r=>VOCAB_DEFAULT.push({id:'v'+(++_vi),cat:cat,french:r[0],pos:r[1],chinese:r[2],english:r[3],example:r[4]||''})); }
+addV("身體與健康",[
+["la tête","n.f.","頭","head","J'ai mal à la tête."],
+["la gorge","n.f.","喉嚨","throat","J'ai mal à la gorge."],
+["le ventre","n.m.","肚子","stomach / belly","J'ai mal au ventre."],
+["le dos","n.m.","背","back","J'ai mal au dos."],
+["les dents (f.)","n.f.pl","牙齒","teeth","J'ai mal aux dents."],
+["les yeux (m.)","n.m.pl","眼睛","eyes","J'ai mal aux yeux."],
+["la fièvre","n.f.","發燒","fever","J'ai de la fièvre."],
+["un rhume","n.m.","感冒","a cold","J'ai attrapé un rhume."],
+["le nez","n.m.","鼻子","nose","J'ai le nez qui coule."],
+["le sommeil","n.m.","睡意","sleepiness","J'ai sommeil."],
+["malade","adj.","生病的","sick","Je suis malade."],
+["un médicament","n.m.","藥","medicine","Je dois prendre des médicaments."],
+["un médecin","n.m.","醫生","doctor","Je vais chez le médecin."],
+["une pharmacie","n.f.","藥局","pharmacy","La pharmacie est à côté d'ici."],
+["une ordonnance","n.f.","處方箋","prescription","Le médecin me donne une ordonnance."],
+["le bras","n.m.","手臂","arm","Je me suis fait mal au bras."],
+["la jambe","n.f.","腿","leg","J'ai mal à la jambe."],
+["le pied","n.m.","腳","foot","J'ai mal au pied."],
+["la main","n.f.","手","hand","Je me lave les mains."],
+["l'oreille (f.)","n.f.","耳朵","ear","J'ai mal à l'oreille."],
+["la peau","n.f.","皮膚","skin","Elle a la peau sensible."],
+["une blessure","n.f.","傷口","injury / wound","Il a une blessure au genou."],
+["un genou","n.m.","膝蓋","knee","Mon sac était sur mes genoux."]
+]);
+addV("情緒與感覺",[
+["content(e) de","adj.","開心的","happy / glad","Je suis content(e) de te voir."],
+["triste","adj.","難過的","sad","Elle est triste aujourd'hui."],
+["fatigué(e)","adj.","累的","tired","Tu as l'air fatigué."],
+["en forme","expr.","狀態好","in good shape","Je suis en forme ce matin."],
+["occupé(e)","adj.","忙碌的","busy","Je suis très occupé(e) cette semaine."],
+["libre","adj.","有空的","free","Tu es libre ce soir ?"],
+["en colère / fâché(e)","adj.","生氣的","angry","Il est en colère contre moi."],
+["sûr(e) de","adj.","確定的","sure / certain","Je suis sûre de ma réponse."],
+["satisfait(e) de","adj.","滿意的","satisfied","Il est satisfait de son travail."],
+["fier / fière de","adj.","驕傲的","proud","Elle est fière de son fils."],
+["angoissant(e)","adj.","使人焦慮的","distressing / stressful","Cette situation est très angoissante."],
+["serein(e)","adj.","平靜的","serene / calm","Elle reste sereine même dans les moments difficiles."],
+["stressé(e)","adj.","有壓力的","stressed","Je suis stressé(e) avant l'examen."],
+["déçu(e)","adj.","失望的","disappointed","Il est déçu du résultat."],
+["surpris(e)","adj.","驚訝的","surprised","Je suis surpris(e) par la nouvelle."],
+["inquiet / inquiète","adj.","擔心的","worried","Elle est inquiète pour son avenir."],
+["indigné(e)","adj.","憤慨的","outraged","Les voyageurs sont indignés."],
+["sensible","adj.","敏感的","sensitive","C'est un sujet sensible."],
+["nécessaire","adj.","必要的","necessary","Il est nécessaire de bien se reposer."],
+["le stress","n.m.","壓力","stress","Je ressens beaucoup de stress avant l'examen."],
+["la peur","n.f.","恐懼","fear","J'ai peur des araignées."],
+["le réconfort","n.m.","安慰","comfort","Ta présence me donne du réconfort."]
+]);
+addV("居住與空間",[
+["un appartement","n.m.","公寓","apartment","J'habite dans un appartement à Paris."],
+["un ascenseur","n.m.","電梯","elevator","Je prends l'ascenseur."],
+["l'escalier mécanique / roulant","n.m.","手扶梯","escalator","Je prends l'escalier mécanique."],
+["la fac (la faculté)","n.f.","大學","university (informal)","J'habite près de la fac."],
+["un manteau","n.m.","大衣","coat","Je porte un manteau en hiver."],
+["une salle de bains","n.f.","浴室","bathroom","La salle de bains est au premier étage."],
+["un séjour / une salle de séjour","n.m.","客廳 / 起居室","living room","Le séjour est grand et lumineux."],
+["un accent","n.m.","口音","accent","Elle a un bel accent français."],
+["une chambre","n.f.","臥室","bedroom","Ma chambre est petite mais confortable."],
+["une cuisine","n.f.","廚房","kitchen","On mange dans la cuisine."],
+["un loyer","n.m.","房租","rent","Le loyer est cher à Paris."],
+["un quartier","n.m.","街區","neighborhood","J'aime bien mon quartier."],
+["un immeuble","n.m.","大樓","building","Il habite dans un vieil immeuble."],
+["un voisin / une voisine","n.","鄰居","neighbor","Mon voisin est très sympathique."]
+]);
+addV("衣服",[
+["un tee-shirt","n.m.","T恤","t-shirt","Je porte un tee-shirt blanc."],
+["un caleçon","n.m.","四角褲 / 短褲","boxers","Il achète un caleçon."],
+["des chaussettes (f.)","n.f.pl","襪子","socks","Mes chaussettes sont bleues."],
+["des baskets (f.)","n.f.pl","運動鞋","sneakers","J'achète des baskets pour faire du sport."],
+["un pantalon","n.m.","長褲","pants / trousers","Il porte un pantalon noir."],
+["une chemise","n.f.","襯衫","shirt","Il met une chemise pour le travail."],
+["une robe","n.f.","洋裝","dress","Elle porte une robe élégante."],
+["des chaussures (f.)","n.f.pl","鞋子","shoes","J'ai besoin de nouvelles chaussures."],
+["une jupe","n.f.","裙子","skirt","Elle porte une jupe courte."],
+["un pull","n.m.","毛衣 / 針織衫","sweater","Je mets un pull quand il fait froid."],
+["une écharpe","n.f.","圍巾","scarf","Elle porte une écharpe en hiver."],
+["un bonnet","n.m.","毛帽","winter hat / beanie","Il porte un bonnet quand il neige."],
+["une veste","n.f.","外套 / 夾克","jacket","Prends ta veste, il fait frais."],
+["des moufles (f.)","n.f.pl","連指手套","mittens","Les enfants portent des moufles."],
+["un blouson","n.m.","夾克","jacket","Le voleur portait un blouson en jean."],
+["un jean","n.m.","牛仔褲","jeans","Il porte un jean et un blouson."],
+["des gants (m.)","n.m.pl","手套","gloves","Mets tes gants, il fait froid."],
+["une casquette","n.f.","棒球帽","cap","Il porte toujours une casquette."],
+["un maillot de bain","n.m.","泳裝","swimsuit","J'ai oublié mon maillot de bain."]
+]);
+addV("日期與星期",[
+["janvier","n.m.","一月","January"],["février","n.m.","二月","February"],["mars","n.m.","三月","March"],
+["avril","n.m.","四月","April"],["mai","n.m.","五月","May"],["juin","n.m.","六月","June"],
+["juillet","n.m.","七月","July"],["août","n.m.","八月","August"],["septembre","n.m.","九月","September"],
+["octobre","n.m.","十月","October"],["novembre","n.m.","十一月","November"],["décembre","n.m.","十二月","December"],
+["lundi","n.m.","星期一","Monday"],["mardi","n.m.","星期二","Tuesday"],["mercredi","n.m.","星期三","Wednesday"],
+["jeudi","n.m.","星期四","Thursday"],["vendredi","n.m.","星期五","Friday"],
+["samedi","n.m.","星期六","Saturday","Je suis libre samedi (=ce samedi)."],
+["le samedi","expr.","每個星期六","on Saturdays (habitually)","Je fais du sport le samedi."],
+["dimanche","n.m.","星期日","Sunday"],
+["aujourd'hui","adv.","今天","today"],["demain","adv.","明天","tomorrow"],["hier","adv.","昨天","yesterday"]
+]);
+addV("天氣",[
+["Il fait beau.","expr.","天氣很好","The weather is nice."],
+["Il fait chaud / froid.","expr.","天氣熱 / 冷","It's hot / cold."],
+["Il fait frais.","expr.","天氣涼爽","It's cool."],
+["Il fait mauvais.","expr.","天氣不好","The weather is bad."],
+["Il pleut.","expr.","下雨","It's raining."],
+["Il neige.","expr.","下雪","It's snowing."],
+["Il y a du soleil.","expr.","有太陽","It's sunny."],
+["Il y a du vent.","expr.","有風","It's windy."],
+["Il y a des nuages.","expr.","多雲","It's cloudy."],
+["la météo","n.f.","天氣預報","the weather forecast","La météo annonce de la pluie."],
+["un orage","n.m.","暴風雨","storm","Il y a un risque d'orage ce soir."],
+["le brouillard","n.m.","霧","fog","Il y a du brouillard ce matin."]
+]);
+addV("數量詞",[
+["beaucoup de","adv.","很多","a lot of","Il y a beaucoup d'opportunités."],
+["un peu de","adv.","一點","a little","J'ai un peu de temps."],
+["assez de","adv.","足夠","enough","Il n'y a pas assez de sel."],
+["trop de","adv.","太多","too much / too many","Il y a trop de bruit."],
+["peu de","adv.","很少","little / few","J'ai peu de temps libre."],
+["plus de","adv.","更多","more","Je veux plus de confort."],
+["moins de","adv.","更少","less / fewer","Le poisson est moins cher que la viande."],
+["environ","adv.","大約","about / approximately","J'étudie environ deux heures par jour."]
+]);
+addV("頻率副詞",[
+["toujours","adv.","總是 (100%)","always","Je vais toujours à la salle de sport."],
+["souvent","adv.","常常 (75%)","often","Je vais souvent au cinéma."],
+["parfois","adv.","有時候 (50%)","sometimes","Je suis parfois allée à Taipei."],
+["de temps en temps","adv.","偶爾 (40%)","from time to time","Je sors de temps en temps."],
+["rarement","adv.","很少 (25%)","rarely / seldom","Je mange rarement de la viande."],
+["jamais","adv.","從不 (0%)","never","Je ne suis jamais allée en Italie."]
+]);
+addV("地點介系詞",[
+["sur","prép.","在...上面","on","Le livre est sur la table."],
+["sous","prép.","在...下面","under","Le chat est sous la table."],
+["dans","prép.","在...裡面","in / inside","Le stylo est dans le sac."],
+["à","prép.","在 / 去","at / to / in","Je vais à Paris."],
+["en","prép.","在 / 去 (陰性國家)","in / to","Je vais en France."],
+["au","prép.","在 / 去 (陽性國家)","in / to","Je vais au Japon."],
+["aux","prép.","在 / 去 (複數國家)","in / to","Je vais aux États-Unis."],
+["chez","prép.","在...某人家","at / to someone's place","Je vais chez mon ami."],
+["devant","prép.","在...前面","in front of","Je suis devant l'école."],
+["derrière","prép.","在...後面","behind","La voiture est derrière la maison."],
+["entre","prép.","在...之間","between","Je suis entre deux amis."],
+["à côté de","prép.","在...旁邊","next to / beside","La banque est à côté du café."],
+["près de","prép.","靠近","near","J'habite près de la gare."],
+["loin de","prép.","遠離","far from","J'habite loin de l'école."],
+["en face de","prép.","在...對面","opposite / across from","Le café est en face de la gare."]
+]);
+addV("時間介系詞與連接詞",[
+["depuis + 時間","prép.","已經...了 (現在仍持續)","since / for (ongoing)","J'apprends le français depuis un an."],
+["il y a + 時間","prép.","...之前 (過去發生)","ago","Je suis allée à Paris il y a deux ans."],
+["pendant + 時間","prép.","持續...時間 (通常已結束)","during / for (completed)","J'ai voyagé pendant une semaine."],
+["dans + 時間","prép.","...之後 (未來)","in (future)","Je vais partir dans deux jours."],
+["avant (de)","prép.","...之前","before","Je vais manger avant de partir."],
+["après","prép.","...之後","after","Après, nous sommes allés à la plage."],
+["jusqu'à","prép.","直到","until","J'ai travaillé jusqu'à minuit."],
+["parce que","conj.","因為","because","Je reste à la maison parce qu'il pleut."],
+["car","conj.","因為 (較書面)","because (more formal)","Il est absent, car il est malade."],
+["donc / alors","conj.","所以","so / therefore","Il pleut, donc je reste à la maison."],
+["mais","conj.","但是","but","J'aime Paris, mais c'est cher."],
+["en effet","expr.","的確 / 因為","indeed / in fact","En effet, c'est une bonne idée."],
+["à cause de","prép.","因為 (負面原因)","because of (negative)","Le vol est annulé à cause de la météo."],
+["grâce à","prép.","多虧 (正面原因)","thanks to (positive)","Grâce à mon professeur, je parle mieux français."],
+["encore","adv.","還 / 仍然 / 再","still / again / more","Je vais encore aller en France."],
+["encore une fois","expr.","再一次","once again","Tu peux répéter encore une fois ?"],
+["presque","adv.","差不多 / 幾乎","almost","Je suis presque en colère."],
+["enfin","adv.","最後 / 終於","finally / at last","Enfin, on est arrivés."],
+["quand même","expr.","還是 / 仍然","still / even so","C'est cher, quand même !"],
+["même","adj./adv.","同樣的 / 甚至","same / even","On porte le même vêtement."],
+["différent(e)","adj.","不同的","different","Nos avis sont différents."],
+["quand","conj./adv.","當...的時候 / 何時","when","Quand tu pars ?"],
+["juste","adv.","剛好 / 附近","just / right (nearby)","La gare est juste à côté."]
+]);
+addV("餐廳用語",[
+["commander","v. (voir fichier verbes)","點餐","to order","Je commande un café."],
+["commenter","v. (voir fichier verbes)","評論","to comment on","Vous pouvez commenter le repas."],
+["Ça a été ?","expr.","吃得還好嗎？","Was it good? (informal)","Ça a été, le dîner ?"],
+["Ça vous a plu ?","expr.","您喜歡嗎？","Did you like it?","Ça vous a plu, ce restaurant ?"],
+["Bon appétit !","expr.","祝你用餐愉快","Enjoy your meal!"],
+["délicieux / excellent","adj.","美味的","delicious / excellent","C'est délicieux !"],
+["fade","adj.","味道太淡","bland","C'est fade, il manque du sel."],
+["salé(e)","adj.","味道太鹹","salty","C'est trop salé pour moi."],
+["Ce n'est pas assez cuit.","expr.","沒煮熟 (太生)","It's not cooked enough."],
+["le sel","n.m.","鹽","salt","Vous pouvez me passer le sel ?"],
+["goûter","v. (voir fichier verbes)","嚐一口","to taste","Tu veux goûter ?"],
+["Je me régale.","expr.","享受美食","I'm enjoying the food a lot."]
+]);
+addV("竊盜與警局",[
+["des affaires (f.)","n.f.pl","財物","belongings","On a volé ses affaires."],
+["un appareil photo","n.m.","相機","camera","Mon appareil photo était sur mes genoux."],
+["un blouson en jean","n.m.","牛仔外套","denim jacket","Il portait un blouson en jean."],
+["un commissariat","n.m.","警察局","police station","On va au commissariat."],
+["un sac","n.m.","包包","bag","On m'a volé mon sac."],
+["un vol","n.m.","竊盜","theft / robbery","Le vol s'est passé dans le métro."],
+["un voleur / une voleuse","n.","小偷","thief","Vous pouvez décrire votre voleur ?"],
+["un policier / une inspectrice","n.","警察 / 探員","police officer / inspector","L'inspecteur pose des questions."],
+["la police","n.f.","警方","the police","Il faut aller à la police porter plainte."],
+["une porte","n.f.","門","door","Il est entré par la porte."],
+["un portefeuille","n.m.","皮夾","wallet","J'ai perdu mon portefeuille."],
+["un porte-monnaie","n.m.","零錢包","coin purse","Son porte-monnaie était dans le sac."],
+["une bouteille d'eau","n.f.","水瓶","water bottle","Il y avait une bouteille d'eau dans le sac."],
+["un ordinateur","n.m.","電腦","computer","Mon ordinateur était dans le sac."],
+["des écouteurs (m.)","n.m.pl","耳機","earphones","J'ai mis mes écouteurs."],
+["un passeport","n.m.","護照","passport","N'oublie pas ton passeport."],
+["des clés (f.)","n.f.pl","鑰匙","keys","Où sont mes clés ?"],
+["une carte d'identité","n.f.","身分證","ID card","J'ai perdu ma carte d'identité."],
+["une carte de crédit","n.f.","信用卡","credit card","Il a payé avec sa carte de crédit."],
+["climatisé(e)","adj.","有冷氣的","air-conditioned","Le métro est climatisé."]
+]);
+addV("交通與火車",[
+["des voyageurs d'affaires","n.m.pl","商務旅客","business travelers","Ce train est fait pour les voyageurs d'affaires."],
+["le confort","n.m.","舒適","comfort","Une certaine idée du confort."],
+["des sièges spacieux","n.m.pl","寬敞的座位","spacious seats","Le train a des sièges spacieux."],
+["un plateau-repas","n.m.","(飛機/火車) 餐盤","meal tray","On sert des plateaux-repas dans le train."],
+["une offre","n.f.","方案 / 優惠","offer / deal","La SNCF propose une nouvelle offre."],
+["des espaces réservés","n.m.pl","專用/保留區域","reserved areas","Il y a des espaces réservés aux familles."],
+["les réseaux sociaux","n.m.pl","社群網路","social media","Les critiques se multiplient sur les réseaux sociaux."],
+["le transport en commun","n.m.","大眾運輸","public transport","Je prends le transport en commun tous les jours."],
+["un embouteillage","n.m.","塞車","traffic jam","Il y a un embouteillage sur l'autoroute."],
+["une gare","n.f.","火車站","train station","La gare est à côté de la fac."],
+["un billet","n.m.","車票","ticket","J'ai acheté un billet de train."]
+]);
+addV("社會議題",[
+["énorme","adj.","巨大的","huge / enormous","C'est un énorme problème."],
+["la discrimination","n.f.","歧視","discrimination","Il faut lutter contre la discrimination."],
+["un sujet","n.m.","主題","topic / subject","C'est un sujet sensible."],
+["sensible","adj.","敏感的","sensitive","C'est un sujet sensible."],
+["exclure","v. (voir fichier verbes)","排除","to exclude","Ce billet exclut les enfants."],
+["ne...que","expr.","只有 / 僅僅","only","Je n'ai vu que son dos."],
+["ne...plus du tout","expr.","完全不再","not at all anymore","Je ne fume plus du tout."],
+["faire des enfants","expr.","生小孩","to have children","Ils ont décidé de faire des enfants."],
+["pas assez","expr.","不夠","not enough","Il n'y a pas assez de places."]
+]);
+addV("職業",[
+["un(e) hôte(sse) d'accueil","n.","機場、旅遊服務台人員","receptionist / information desk staff","L'hôtesse d'accueil peut vous aider."],
+["un(e) réceptionniste","n.","飯店櫃台接待","hotel receptionist","Je voudrais parler à la réceptionniste."],
+["un(e) chauffeur(euse)","n.","司機","driver","Le chauffeur conduit le bus."],
+["un(e) agent(e) du métro","n.","地鐵站務人員","metro employee","Je demande un renseignement à l'agent du métro."],
+["un(e) guichetier(-ière)","n.","售票員","ticket clerk","Le guichetier vend les billets."],
+["un(e) serveur(euse)","n.","服務生","waiter / waitress","Le serveur apporte le menu."],
+["un(e) boulanger(-ère)","n.","麵包師傅、麵包店老闆","baker"],
+["un(e) vendeur(euse)","n.","服飾店店員","salesperson / shop assistant","Le vendeur m'aide à choisir un manteau."],
+["un(e) rayonniste","n.","商品上架人員","shelf stocker","Le rayonniste remplit les rayons."],
+["un(e) banquier(-ière)","n.","銀行行員","banker","Le banquier ouvre un compte bancaire."],
+["un(e) postier(-ière)","n.","郵務人員","postal worker","Le postier distribue le courrier."],
+["un(e) conseiller(-ère) de vente","n.","銷售顧問","sales advisor","La conseillère de vente est très gentille."],
+["un(e) agent(e) immobilier(-ière)","n.","房屋仲介","real estate agent","L'agent immobilier montre un appartement."],
+["un(e) libraire","n.","書店老闆","bookseller / bookstore owner","Le libraire vend des livres français."],
+["un agent de police","n.","警察","police officer"],
+["un(e) docteur","n.","醫生","doctor","Le docteur examine le patient."],
+["un(e) pharmacien(ne)","n.","藥劑師","pharmacist","Le pharmacien me donne un médicament."],
+["un(e) paysan(ne)","n.","農夫","farmer","Le paysan vend des légumes au marché."],
+["un(e) plombier(-ière)","n.","水管工","plumber","Le plombier répare les tuyaux."],
+["un(e) coiffeur(euse)","n.","髮型設計師","hairdresser","Je vais chez le coiffeur."],
+["un(e) fleuriste","n.","花店職員","florist","J'achète des fleurs chez le fleuriste."],
+["un(e) bibliothécaire","n.","圖書館員","librarian","Le bibliothécaire m'aide à trouver un livre."]
+]);
+if(VOCAB_DEFAULT.length!==239) console.warn('vocab count', VOCAB_DEFAULT.length);
+const GLOSSIKA_SNAPSHOT = [["Glossika 第10週", "Oui, bien sûr, allez-y.", "Yes, of course, go ahead."], ["Glossika 第10週", "Je suis désolé(e), c'est interdit.", "I'm sorry, it's forbidden."], ["Glossika 第10週", "Vas-y.", "Go ahead."], ["Glossika 第10週", "Est-ce que vous voulez dîner avec nous ?", "Would you like to have dinner with us?"], ["Glossika 第10週", "Tu viens au ciné ce soir ?", "Are you coming to the cinema tonight?"], ["Glossika 第10週", "Je vous invite à prendre un café.", "I invite you for a coffee."], ["Glossika 第10週", "Quel temps fait-il aujourd'hui ?", "What's the weather like today?"], ["Glossika 第10週", "Il fait beau, mais il y a du vent.", "It's nice out, but windy."], ["Glossika 第10週", "Il va pleuvoir demain.", "It's going to rain tomorrow."], ["Glossika 第10週", "La température est de quinze degrés.", "The temperature is fifteen degrees."], ["Glossika 第10週", "J'aimerais bien essayer — tu pourrais m'aider ?", "I'd like to try — could you help me?"], ["Glossika 第10週", "Je veux du pain et de la confiture.", "I want some bread and jam."], ["Glossika 第10週", "Il y a un chat dans le jardin.", "There's a cat in the garden."], ["Glossika 第10週", "Je le connais bien, c'est mon voisin.", "I know him well, he's my neighbor."], ["Glossika 第10週", "C'est ta sœur ? Elle te ressemble beaucoup.", "Is that your sister? She looks a lot like you."], ["Glossika 第9週", "Pourriez-vous m'aider, s'il vous plaît ?", "Could you help me, please?"], ["Glossika 第9週", "Tu peux m'aider ?", "Can you help me?"], ["Glossika 第9週", "Excusez-moi, je cherche la poste.", "Excuse me, I'm looking for the post office."], ["Glossika 第9週", "Vous pouvez répéter, s'il vous plaît ?", "Can you repeat, please?"], ["Glossika 第9週", "Je voudrais réserver une table.", "I would like to reserve a table."], ["Glossika 第9週", "Est-ce que je pourrais avoir l'addition ?", "Could I have the bill?"], ["Glossika 第9週", "Bien sûr.", "Of course."], ["Glossika 第9週", "Je suis désolé(e), ce n'est pas possible.", "I'm sorry, it's not possible."], ["Glossika 第9週", "Pas de problème.", "No problem."], ["Glossika 第9週", "J'ai mal à la tête.", "I have a headache."], ["Glossika 第9週", "Je ne me sens pas bien.", "I don't feel well."], ["Glossika 第9週", "Depuis combien de temps ?", "For how long?"], ["Glossika 第9週", "Je voudrais prendre un rendez-vous.", "I'd like to make an appointment."], ["Glossika 第9週", "Je dois partir — il est déjà tard.", "I have to leave — it's already late."], ["Glossika 第9週", "Il faut manger pour vivre — pas vivre pour manger !", "You have to eat to live — not live to eat!"], ["Glossika 第9週", "Regarde ça ! — Écoute, c'est important.", "Look at that! — Listen, it's important."], ["Glossika 第8週", "J'ai faim.", "I'm hungry. (lit. \"I have hunger\")"], ["Glossika 第8週", "J'ai soif.", "I'm thirsty. (lit. \"I have thirst\")"], ["Glossika 第8週", "J'ai chaud.", "I'm hot."], ["Glossika 第8週", "J'ai froid.", "I'm cold."], ["Glossika 第8週", "J'ai mal au dos.", "My back hurts."], ["Glossika 第8週", "Je suis crevé(e).", "I'm exhausted."], ["Glossika 第8週", "Tournez à gauche.", "Turn left."], ["Glossika 第8週", "Allez tout droit.", "Go straight ahead."], ["Glossika 第8週", "Prends la deuxième à droite.", "Take the second right."], ["Glossika 第8週", "Vous prenez le bus numéro 5.", "You take bus number 5."], ["Glossika 第8週", "Qu'est-ce que tu fais dans la vie ?", "What do you do for a living?"], ["Glossika 第8週", "Je travaille dans une entreprise internationale.", "I work for an international company."], ["Glossika 第8週", "Quels sont vos horaires ?", "What are your working hours?"], ["Glossika 第8週", "Ça te plaît, ton travail ?", "Do you like your job?"], ["Glossika 第8週", "Je veux partir maintenant.", "I want to leave now."], ["Glossika 第8週", "Il faut y aller, on va être en retard.", "We have to go, we're going to be late."], ["Glossika 第8週", "Tu peux m'aider ? — Désolé, je ne peux pas maintenant.", "Can you help me? — Sorry, I can't right now."], ["Glossika 第8週", "Tu veux un café ? — Non merci, je veux un thé.", "Do you want a coffee? — No thanks, I want a tea."], ["Glossika 第7週", "Je voudrais un café, s'il vous plaît.", "I would like a coffee, please."], ["Glossika 第7週", "Je veux partir.", "I want to leave."], ["Glossika 第7週", "J'aimerais visiter le Japon.", "I would like to visit Japan."], ["Glossika 第7週", "J'ai envie de sortir.", "I feel like going out."], ["Glossika 第7週", "Je suis content(e).", "I am happy."], ["Glossika 第7週", "Je suis triste.", "I am sad."], ["Glossika 第7週", "Je suis fatigué(e).", "I am tired."], ["Glossika 第7週", "J'ai peur.", "I am afraid. (lit. \"I have fear\")"], ["Glossika 第7週", "J'en ai marre.", "I'm fed up."], ["Glossika 第7週", "Ça me fait plaisir.", "That makes me happy."], ["Glossika 第7週", "Je suis surpris(e).", "I am surprised."], ["Glossika 第7週", "Tu te lèves à quelle heure ?", "What time do you get up?"], ["Glossika 第7週", "Je me couche vers vingt-trois heures.", "I go to bed around 11 pm."], ["Glossika 第7週", "Je me dépêche, je suis en retard !", "I'm hurrying, I'm late!"], ["Glossika 第7週", "Le matin, je prends le petit-déjeuner à sept heures et demie.", "In the morning, I have breakfast at 7:30."], ["Glossika 第7週", "J'habite à Lyon depuis cinq ans — j'adore cette ville.", "I've been living in Lyon for five years — I love this city."], ["Glossika 第7週", "On va manger où ce soir ?", "Where are we eating tonight?"], ["Glossika 第7週", "Dépêche-toi, le train est sur le point de partir !", "Hurry up, the train is about to leave!"], ["Glossika 第6週", "Il faut réserver.", "One must reserve."], ["Glossika 第6週", "Je dois partir.", "I must leave."], ["Glossika 第6週", "On peut entrer ?", "Can we come in?"], ["Glossika 第6週", "C'est interdit de fumer.", "Smoking is forbidden."], ["Glossika 第6週", "T'as le droit de rester.", "You're allowed to stay."], ["Glossika 第6週", "J'aime le chocolat.", "I like chocolate."], ["Glossika 第6週", "Je n'aime pas le froid.", "I don't like the cold."], ["Glossika 第6週", "J'adore voyager.", "I love traveling."], ["Glossika 第6週", "Je déteste me lever tôt.", "I hate getting up early."], ["Glossika 第6週", "Je préfère le thé au café.", "I prefer tea to coffee."], ["Glossika 第6週", "Vous habitez où ?", "Where do you live?"], ["Glossika 第6週", "J'habite dans un appartement au troisième étage.", "I live in an apartment on the third floor."], ["Glossika 第6週", "C'est combien, le loyer ?", "How much is the rent?"], ["Glossika 第6週", "Il y a deux chambres et un grand salon.", "There are two bedrooms and a large living room."], ["Glossika 第6週", "Il est quelle heure ? — Il est trois heures et demie.", "What time is it? — It's half past three."], ["Glossika 第6週", "Je parle français tous les jours.", "I speak French every day."], ["Glossika 第6週", "Je suis en train de manger, je te rappelle.", "I'm eating right now, I'll call you back."], ["Glossika 第6週", "J'ai mangé au restaurant hier soir.", "I ate at a restaurant last night."], ["Glossika 第6週", "Elle est partie ce matin sans rien dire.", "She left this morning without saying anything."], ["Glossika 第5週", "Oui, je suis d'accord.", "Yes, I agree."], ["Glossika 第5週", "Non, je ne suis pas d'accord.", "No, I disagree."], ["Glossika 第5週", "Tout à fait.", "Absolutely."], ["Glossika 第5週", "Exactement.", "Exactly."], ["Glossika 第5週", "Vous avez raison.", "You are right."], ["Glossika 第5週", "Ben non.", "Well, no. (softened disagreement)"], ["Glossika 第5週", "Je sais.", "I know."], ["Glossika 第5週", "Je ne sais pas.", "I don't know."], ["Glossika 第5週", "J'sais pas.", "I dunno."], ["Glossika 第5週", "Aucune idée.", "No idea."], ["Glossika 第5週", "Je connais bien Paris.", "I know Paris well."], ["Glossika 第5週", "Je ne connais pas cette personne.", "I don't know this person."]];
+GLOSSIKA_SNAPSHOT.forEach((r,i)=>VOCAB_DEFAULT.push({id:'gl'+i,cat:CAT_SENT,french:r[1],pos:r[0].replace('Glossika ',''),chinese:'',english:r[2],example:''}));
+
+let _gi=0;
+const VERB_DEFAULT=[];
+function addG(cat,rows){ rows.forEach(r=>VERB_DEFAULT.push({id:'g'+(++_gi),cat:cat,french:r[0],chinese:r[1],english:r[2],present:r[3],futur:r[4],pc:r[5],imparfait:r[6],example:r[7]})); }
+addG("反身動詞(日常作息)",[
+["se réveiller","醒來","to wake up","je me réveille","je vais me réveiller","je me suis réveillé(e)","je me réveillais","Je me réveille à huit heures."],
+["se lever","起床","to get up","je me lève","je vais me lever","je me suis levé(e)","je me levais","Je me lève tôt."],
+["se préparer","準備好","to get ready","je me prépare","je vais me préparer","je me suis préparé(e)","je me préparais","Je me prépare avant de sortir."],
+["s'habiller","穿衣服","to get dressed","je m'habille","je vais m'habiller","je me suis habillé(e)","je m'habillais","Je m'habille vite le matin."],
+["se maquiller","化妝","to put on makeup","je me maquille","je vais me maquiller","je me suis maquillé(e)","je me maquillais","Elle se maquille avant de sortir."],
+["se coiffer","整理頭髮","to do one's hair","je me coiffe","je vais me coiffer","je me suis coiffé(e)","je me coiffais","Je me coiffe devant le miroir."],
+["se brosser les dents","刷牙","to brush one's teeth","je me brosse les dents","je vais me brosser les dents","je me suis brossé les dents","je me brossais les dents","Je me brosse les dents deux fois par jour."],
+["se laver","洗澡","to wash (oneself)","je me lave","je vais me laver","je me suis lavé(e)","je me lavais","Je me lave le matin."],
+["se doucher","淋浴","to shower","je me douche","je vais me doucher","je me suis douché(e)","je me douchais","Je me douche tous les soirs."],
+["se reposer","休息","to rest","je me repose","je vais me reposer","je me suis reposé(e)","je me reposais","Je me repose après le travail."],
+["se détendre","放鬆","to relax","je me détends","je vais me détendre","je me suis détendu(e)","je me détendais","Je me détends le week-end."],
+["se coucher","上床睡覺","to go to bed","je me couche","je vais me coucher","je me suis couché(e)","je me couchais","Je me couche à minuit."],
+["s'endormir","睡著","to fall asleep","je m'endors","je vais m'endormir","je me suis endormi(e)","je m'endormais","Je m'endors vite."],
+["dormir","睡覺 (非反身)","to sleep","je dors","je vais dormir","j'ai dormi","je dormais","Je dors huit heures."]
+]);
+addG("其他常用動詞",[
+["aller","去","to go","je vais","je vais aller","je suis allé(e)","j'allais","Je vais à Paris."],
+["devoir","必須","must / to have to","je dois","je vais devoir","j'ai dû","je devais","Je dois étudier le français."],
+["il faut (無人稱)","必須 / 需要 (一般規則，沒有特定人)","one must (impersonal)","il faut","il faudra","il a fallu","il fallait","Il faut chercher un stage."],
+["s'asseoir","坐下 (動作)","to sit down","je m'assois","je vais m'asseoir","je me suis assis(e)","je m'asseyais","Je m'assois sur la chaise."],
+["être assis(e)","坐著 (狀態)","to be seated (state)","je suis assis(e)","--","--","j'étais assis(e)","Il est assis à côté de moi."],
+["attraper","抓住 / 感染上","to catch","j'attrape","je vais attraper","j'ai attrapé","j'attrapais","Il a attrapé le voleur."],
+["décrire","描述","to describe","je décris","je vais décrire","j'ai décrit","je décrivais","Décrivez votre voleur."],
+["lire","讀","to read","je lis","je vais lire","j'ai lu","je lisais","Je lisais dans le métro."],
+["pleurer","哭","to cry","je pleure","je vais pleurer","j'ai pleuré","je pleurais","Ne pleurez pas."],
+["porter plainte","報案 / 提告","to file a complaint","je porte plainte","je vais porter plainte","j'ai porté plainte","je portais plainte","Il faut aller porter plainte à la police."],
+["sauter","跳","to jump","je saute","je vais sauter","j'ai sauté","je sautais","Il a sauté sur le quai."],
+["voler","偷","to steal","je vole","je vais voler","j'ai volé","je volais","On m'a volé mon sac."],
+["ressentir","感受到","to feel","je ressens","je vais ressentir","j'ai ressenti","je ressentais","Je ressens beaucoup de stress avant l'examen."],
+["se calmer","使自己平靜","to calm down","je me calme","je vais me calmer","je me suis calmé(e)","je me calmais","J'essaie de me calmer quand je suis stressé(e)."],
+["se concentrer","專心","to concentrate","je me concentre","je vais me concentrer","je me suis concentré(e)","je me concentrais","Je dois me concentrer sur mon travail."],
+["surmonter","克服","to overcome","je surmonte","je vais surmonter","j'ai surmonté","je surmontais","Je veux surmonter ma peur."],
+["éviter","避免","to avoid","j'évite","je vais éviter","j'ai évité","j'évitais","Il faut éviter de dormir trop tard."],
+["vivre","生活","to live","je vis","je vais vivre","j'ai vécu","je vivais","Je vis à Taïwan."],
+["proposer","提出 / 提供","to offer / propose","je propose","je vais proposer","j'ai proposé","je proposais","La SNCF propose plus de confort."],
+["exclure","排除","to exclude","j'exclus","je vais exclure","j'ai exclu","j'excluais","Ce billet exclut les enfants."],
+["se multiplier","增多 / 變多","to multiply / increase","il se multiplie","il va se multiplier","il s'est multiplié","il se multipliait","Les critiques se multiplient sur les réseaux sociaux."],
+["être divisé(e)","意見分裂","to be divided (opinion)","il est divisé","il va être divisé","il a été divisé","il était divisé","L'opinion est divisée sur ce sujet."],
+["commander","點餐 / 訂購","to order","je commande","je vais commander","j'ai commandé","je commandais","Je commande un café."],
+["commenter","評論","to comment on","je commente","je vais commenter","j'ai commenté","je commentais","Vous pouvez commenter le repas."],
+["goûter","嚐一口","to taste","je goûte","je vais goûter","j'ai goûté","je goûtais","Tu veux goûter ?"],
+["tousser","咳嗽","to cough","je tousse","je vais tousser","j'ai toussé","je toussais","Il tousse beaucoup."],
+["éternuer","打噴嚏","to sneeze","j'éternue","je vais éternuer","j'ai éternué","j'éternuais","Elle éternue souvent."]
+]);
+addG("Avoir_Être_Faire_Prendre句型",[
+["avoir faim","肚子餓","to be hungry","J'ai faim.","Je vais avoir faim.","J'ai eu faim.","J'avais faim.","J'ai faim."],
+["avoir soif","口渴","to be thirsty","J'ai soif.","Je vais avoir soif.","J'ai eu soif.","J'avais soif.","J'ai soif."],
+["avoir froid / chaud","冷 / 熱","to be cold / hot","J'ai froid.","Je vais avoir froid.","J'ai eu froid.","J'avais froid.","J'ai froid."],
+["avoir sommeil","想睡","to be sleepy","J'ai sommeil.","Je vais avoir sommeil.","J'ai eu sommeil.","J'avais sommeil.","J'ai sommeil."],
+["avoir peur de","害怕","to be afraid of","J'ai peur des araignées.","Je vais avoir peur.","J'ai eu peur.","J'avais peur.","J'ai peur des araignées."],
+["avoir besoin de","需要","to need","J'ai besoin de toi.","Je vais avoir besoin de toi.","J'ai eu besoin de toi.","J'avais besoin de toi.","J'ai besoin de toi."],
+["avoir envie de","想要 / 想做","to feel like (doing)","J'ai envie de dormir.","Je vais avoir envie de dormir.","J'ai eu envie de dormir.","J'avais envie de dormir.","J'ai envie de dormir."],
+["avoir mal à","...疼痛","to have pain in","J'ai mal à la tête.","Je vais avoir mal à la tête.","J'ai eu mal à la tête.","J'avais mal à la tête.","J'ai mal à la tête."],
+["avoir raison","說對了","to be right","Tu as raison.","Tu vas avoir raison.","Tu as eu raison.","Tu avais raison.","Tu as raison."],
+["avoir tort","說錯了","to be wrong","Tu as tort.","Tu vas avoir tort.","Tu as eu tort.","Tu avais tort.","Tu as tort."],
+["avoir de la chance","幸運","to be lucky","J'ai de la chance.","Je vais avoir de la chance.","J'ai eu de la chance.","J'avais de la chance.","J'ai de la chance."],
+["avoir l'air + adj.","看起來 / 好像","to look / seem","Tu as l'air fatigué.","Tu vas avoir l'air fatigué.","Tu as eu l'air fatigué.","Tu avais l'air fatigué.","Tu as l'air fatigué."],
+["avoir du mal à + inf.","做某事有困難","to have trouble doing sth.","J'ai du mal à comprendre.","Je vais avoir du mal à comprendre.","J'ai eu du mal à comprendre.","J'avais du mal à comprendre.","J'ai du mal à comprendre."],
+["être content(e) de","開心","to be happy about","Je suis content(e) de te voir.","Je vais être content(e).","J'ai été content(e).","J'étais content(e).","Je suis content(e) de te voir."],
+["être malade","生病","to be sick","Je suis malade.","Je vais être malade.","J'ai été malade.","J'étais malade.","Je suis malade."],
+["être en forme","狀態好","to be in good shape","Je suis en forme.","Je vais être en forme.","J'ai été en forme.","J'étais en forme.","Je suis en forme."],
+["tomber malade","生病了 / 病倒 (強調從健康變生病)","to fall ill","Il tombe malade.","Il va tomber malade.","Il est tombé malade.","--","Il tombe malade."],
+["faire attention","小心","to pay attention / be careful","Je fais attention.","Je vais faire attention.","J'ai fait attention.","Je faisais attention.","Je fais attention."],
+["faire la cuisine","做飯","to cook","Je fais la cuisine le soir.","Je vais faire la cuisine.","J'ai fait la cuisine.","Je faisais la cuisine.","Je fais la cuisine le soir."],
+["faire le ménage","打掃","to do housework","Je fais le ménage.","Je vais faire le ménage.","J'ai fait le ménage.","Je faisais le ménage.","Je fais le ménage."],
+["faire la lessive","洗衣服","to do laundry","Je fais la lessive.","Je vais faire la lessive.","J'ai fait la lessive.","Je faisais la lessive.","Je fais la lessive."],
+["faire la vaisselle","洗碗","to do the dishes","Je fais la vaisselle.","Je vais faire la vaisselle.","J'ai fait la vaisselle.","Je faisais la vaisselle.","Je fais la vaisselle."],
+["faire les courses","買菜 / 採買","to go grocery shopping","Je fais les courses.","Je vais faire les courses.","J'ai fait les courses.","Je faisais les courses.","Je fais les courses."],
+["faire du sport","運動","to play sports","Je fais du sport deux fois par semaine.","Je vais faire du sport.","J'ai fait du sport.","Je faisais du sport.","Je fais du sport deux fois par semaine."],
+["faire une promenade","散步","to take a walk","Je fais une promenade.","Je vais faire une promenade.","J'ai fait une promenade.","Je faisais une promenade.","Je fais une promenade."],
+["faire une erreur","犯錯","to make a mistake","Je fais une erreur.","Je vais faire une erreur.","J'ai fait une erreur.","Je faisais une erreur.","Je fais une erreur."],
+["faire la fête","聚會 / 慶祝","to party","Je fais la fête.","Je vais faire la fête.","J'ai fait la fête.","Je faisais la fête.","Je fais la fête."],
+["faire un voyage","旅行","to take a trip","Je fais un voyage.","Je vais faire un voyage.","J'ai fait un voyage.","Je faisais un voyage.","Je fais un voyage."],
+["faire la sieste","睡午覺","to take a nap","Je fais la sieste.","Je vais faire la sieste.","J'ai fait la sieste.","Je faisais la sieste.","Je fais la sieste."],
+["prendre son temps","慢慢來 / 不急","to take one's time","Je prends mon temps.","Je vais prendre mon temps.","J'ai pris mon temps.","Je prenais mon temps.","Je prends mon temps."],
+["prendre rendez-vous","預約","to make an appointment","Je prends rendez-vous.","Je vais prendre rendez-vous.","J'ai pris rendez-vous.","Je prenais rendez-vous.","Je prends rendez-vous."],
+["prendre une décision","做決定","to make a decision","Je prends une décision.","Je vais prendre une décision.","J'ai pris une décision.","Je prenais une décision.","Je prends une décision."],
+["prendre l'ascenseur / l'escalier","搭電梯 / 走樓梯","to take the elevator / stairs","Je prends l'ascenseur.","Je vais prendre l'ascenseur.","J'ai pris l'ascenseur.","Je prenais l'ascenseur.","Je prends l'ascenseur."]
+]);
+let _ri=0;
+const GRAMMAR_DEFAULT=[];
+function addR(rows){ rows.forEach(r=>GRAMMAR_DEFAULT.push({id:'r'+(++_ri),cat:'文法句型',french:r[0],chinese:r[1],english:r[2],example:r[3]})); }
+addR([
+["il faut + infinitif","一般規則、客觀需要，沒有特定的人","general rule / necessity, no specific subject","Il faut chercher un stage."],
+["devoir + infinitif","強調某個人必須做某件事","emphasizes a specific person's obligation","Tu dois dormir tôt."],
+["ne...pas (passé composé)","否定 (沒有)","not","Je n'ai pas vu le voleur."],
+["ne...jamais","從來沒有","never","Je ne suis jamais allée en Italie."],
+["ne...plus","不再","no longer","Je ne bois plus de café."],
+["ne...rien","什麼都沒有","nothing","Je n'ai rien mangé."],
+["ne...que","只有、僅僅","only","Je n'ai vu que son dos."],
+["tout (代名詞)","全部","everything / all","J'ai tout perdu."],
+["Qu'est-ce qui se passe ?","發生什麼事了？(現在)","What's happening?","Qu'est-ce qui se passe ?"],
+["Qu'est-ce qui s'est passé ?","發生了什麼事？(過去)","What happened?","Qu'est-ce qui s'est passé ?"],
+["Qu'est-ce que c'est ?","這是什麼？","What is it?","Qu'est-ce que c'est ?"],
+["Qu'est-ce qu'il y a ?","怎麼了／有什麼事？","What's wrong? / What is there?","Qu'est-ce qu'il y a ?"],
+["depuis + 時間 + 現在式","已經...了 (現在仍在進行)","since / for (ongoing action)","J'apprends le français depuis un an."],
+["il y a + 時間 (+ passé composé)","...之前 (過去發生的事)","ago","Je suis allée à Paris il y a deux ans."],
+["pendant + 時間","持續...時間，通常已經結束","during / for (completed duration)","J'ai voyagé pendant une semaine."],
+["dans + 時間","...之後 (未來)","in (a future time)","Je vais partir dans deux jours."],
+["avant de + infinitif","...之前","before (doing sth.)","Je vais manger avant de partir."],
+["après","...之後","after","Après, nous sommes allés à la plage."],
+["jusqu'à","直到","until","J'ai travaillé jusqu'à minuit."],
+["plus / moins / autant...que","比較句 (更多／更少／一樣多)","comparison (more / less / as...as)","Tu es plus âgé que moi."],
+["passé composé vs imparfait","passé composé＝已結束的單一動作；imparfait＝描述場景、狀態、習慣","p.c. = completed action; imparfait = description / background / habit","Je lisais quand il est arrivé."]
+]);
+const ARTICLES_DEFAULT = [
+{id:"a1", title:"Une journée typique（日常作息）", text:"Je m'appelle Maggie. Voici ma journée typique. Le matin, je me réveille à sept heures et je me lève tout de suite. Je me douche, puis je m'habille. Ensuite, je prends mon petit-déjeuner et je pars pour l'université. À midi, je déjeune avec mes amis à la fac. L'après-midi, j'ai des cours et je travaille sur mes projets. Le soir, je rentre chez moi vers dix-neuf heures. Je fais la cuisine, je dîne et je regarde un peu la télévision. Avant de me coucher, je révise mon vocabulaire de français. Je me couche vers minuit parce que j'ai beaucoup de travail. Demain, je vais me lever encore plus tôt !"},
+{id:"a2", title:"Je suis malade（生病）", text:"Depuis deux jours, je ne suis pas en forme. J'ai mal à la gorge et j'ai un peu de fièvre. Hier soir, j'ai commencé à tousser et j'avais le nez qui coule. Ce matin, je me sens très fatiguée, alors je décide de rester à la maison. Je prends des médicaments et je bois beaucoup d'eau chaude. Mon amie me dit : « Il faut aller chez le médecin si tu ne vas pas mieux demain. » Je pense qu'elle a raison. Je vais aussi dormir tôt ce soir pour bien me reposer. J'espère que je n'aurai plus de fièvre demain matin, parce que j'ai un entretien important après-demain !"},
+{id:"a3", title:"Chercher un stage en France（找實習）", text:"Je cherche un stage de six mois en France. C'est un peu stressant, mais je suis motivée ! Chaque jour, je regarde des offres sur Internet et j'envoie mon CV et ma lettre de motivation. La semaine dernière, une entreprise à Paris m'a contactée pour un entretien. J'étais très contente, mais aussi un peu angoissée parce que mon français n'est pas encore parfait. Avant l'entretien, j'ai révisé mes réponses et j'ai demandé des conseils à mon professeur. Pendant l'entretien, j'ai parlé de mon expérience professionnelle à Taïwan et de mon mandarin natif. À la fin, la responsable m'a dit qu'elle allait me recontacter dans une semaine. Maintenant, j'attends la réponse avec impatience !"},
+{id:"a4", title:"Le temps qu'il fait（天氣與旅行）", text:"Ce week-end, je vais voyager à Nice avec deux amies. Avant de partir, je regarde la météo. Vendredi, il va faire beau et il va y avoir du soleil : parfait pour la plage ! Mais samedi, il va pleuvoir un peu et il va faire plus frais. Nous devons donc prendre un parapluie et une veste. Dimanche, le temps va être nuageux, mais il ne va pas faire froid. Je suis très contente parce que je n'ai jamais visité le sud de la France. J'ai envie de me promener au bord de la mer et de goûter la cuisine locale. J'espère qu'il ne va pas pleuvoir toute la journée !"},
+{id:"a5", title:"Faire du shopping（買衣服）", text:"Il fait de plus en plus froid, alors je décide de faire du shopping. Je vais dans un grand magasin près de chez moi. J'ai besoin d'un manteau chaud, d'une écharpe et de nouvelles chaussures. Dans le magasin, une vendeuse me demande : « Je peux vous aider ? » Je réponds que je cherche un manteau noir, pas trop cher. Elle me propose plusieurs modèles. J'essaie une veste bleue, mais elle est trop petite. Finalement, je trouve un joli manteau gris qui me va très bien. Je l'achète avec ma carte de crédit. Je suis contente de mon shopping, mais j'ai dépensé plus d'argent que prévu !"},
+{id:"a6", title:"Un nouvel appartement（新公寓）", text:"La semaine dernière, j'ai emménagé dans un nouvel appartement près de la fac. Il y a une chambre, une petite cuisine et une salle de bains. Il n'y a pas d'ascenseur, alors je dois prendre l'escalier tous les jours — c'est bon pour le sport ! Mon appartement est un peu petit, mais il est calme et lumineux. Le premier jour, j'ai rangé mes affaires et j'ai fait le ménage. Mes nouveaux voisins sont très gentils ; ils m'ont invitée à prendre un café. Maintenant, je me sens vraiment chez moi. J'ai hâte de recevoir mes amis dans mon nouveau logement !"},
+{id:"a7", title:"Apéritif（開胃酒）", folder:"文化", text:"L’apéritif, qu’on appelle aussi l’apéro①, est avant tout un rituel social, il a lieu avant les repas, déjeuner ou dîner. On prend l’apéro au café ou à la maison, avec des amis, en famille.\nLe prétexte de l’apéritif est d’ouvrir l’appétit, de préparer au plaisir du repas. Les boissons traditionnelles sont le pastis, le martini, le porto, le kir (mélange de vin blanc et de sirop de cassis)②, des cocktails ou tout simplement un jus de fruits pour ceux qui ne boivent pas d’alcool. Les boissons sont servies avec des cacahuètes, des petits biscuits salés, des olives ou toutes sortes de bouchées imaginées par les hôtes③. Parfois, l’apéro peut même se substituer au repas.\nOn arrive chez des amis « à l’heure de l’apéro », c’est-à-dire bien avant le repas. Ce moment passé ensemble est l’occasion de conversations générales et détendues entre les convives ; mais si la discussion touche un sujet controversé, comme c’est souvent le cas, les débats peuvent devenir rapidement animés et bruyants."}
+].map(a => ({...a, type:'text', folder: a.folder || '原創短文'}));
+const LINKS_DEFAULT = [
+  {id:'l1', type:'link', title:'Le français facile avec RFI', source:'RFI', url:'https://francaisfacile.rfi.fr/', folder:'外部連結',
+   desc:'RFI 電台每天推出的簡化版新聞，用字淺顯、附文字稿與音檔，是最常被推薦給 A2～B1 學習者的新聞資源。'},
+  {id:'l2', type:'link', title:'Bonjour de France－A2 閱讀練習', source:'Bonjour de France', url:'https://www.bonjourdefrance.com/exercices-de-francais/niveau-a2/', folder:'外部連結',
+   desc:'專為法語學習者設計的分級閱讀網站，A2 分類下有大量短文，讀完文章可直接做線上測驗題。'},
+  {id:'l3', type:'link', title:'TV5MONDE－Apprendre le français', source:'TV5MONDE', url:'https://apprendre.tv5monde.com/fr', folder:'外部連結',
+   desc:'法國電視台 TV5MONDE 的學習平台，用真實影片、報導搭配分級練習（A1–B2），影片旁通常附文字稿。'},
+  {id:'l4', type:'link', title:'1jour1actu', source:'1jour1actu', url:'https://www.1jour1actu.com/', folder:'外部連結',
+   desc:'給法國小朋友看的新聞網站，用詞簡單、句子短，很適合 A2 程度的成人學習者拿來練閱讀。'},
+  {id:'l5', type:'link', title:'Le Point du FLE－閱讀理解練習彙整', source:'lepointdufle.net', url:'https://www.lepointdufle.net/p/comprehension-ecrite.htm', folder:'外部連結',
+   desc:'一個整理各種法語學習網站閱讀理解練習連結的入口網站，可以依主題或程度找更多短文。'},
+];
+
+
+/* ================= STORAGE ================= */
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let customVocab = LS.get('fr_customVocab', []);
+let customArticles = LS.get('fr_customArticles', []);
+let notesStore = LS.get('fr_notes', {});
+let progress = LS.get('fr_progress', {});
+let quizHistory = LS.get('fr_quizHistory', {played:0, correct:0, total:0});
+let prefs = LS.get('fr_prefs', {ignoreAccents:false});
+let deletedCategories = LS.get('fr_deletedCategories', []);
+let pinnedCategories = LS.get('fr_pinnedCategories', ['片語']);
+let wordCategoryOverrides = LS.get('fr_wordCatOverrides', {});
+let articleFolders = LS.get('fr_articleFolders', ['原創短文','外部連結','我的文章']);
+let articleFolderOverrides = LS.get('fr_articleFolderOverrides', {});
+let deletedFolders = LS.get('fr_deletedFolders', []);
+
+function saveAll(){
+  LS.set('fr_customVocab', customVocab); LS.set('fr_customArticles', customArticles);
+  LS.set('fr_notes', notesStore); LS.set('fr_progress', progress);
+  LS.set('fr_quizHistory', quizHistory); LS.set('fr_prefs', prefs);
+  LS.set('fr_deletedCategories', deletedCategories); LS.set('fr_pinnedCategories', pinnedCategories);
+  LS.set('fr_wordCatOverrides', wordCategoryOverrides); LS.set('fr_articleFolders', articleFolders);
+  LS.set('fr_articleFolderOverrides', articleFolderOverrides); LS.set('fr_deletedFolders', deletedFolders);
+}
+if(!prefs.tagsInit){
+  ['片語', CAT_WORD, CAT_SENT].forEach(c=>{ if(!pinnedCategories.includes(c)) pinnedCategories.push(c); });
+  prefs.tagsInit = true; saveAll();
+}
+function allVocab(){
+  return [...VOCAB_DEFAULT, ...customVocab].map(w => { return {...w, cat: wordCategoryOverrides[w.id] || w.cat}; }).filter(w => !deletedCategories.includes(w.cat) && !(prefs.delIds && prefs.delIds[w.id]));
+}
+function allArticles(){
+  return [...ARTICLES_DEFAULT, ...LINKS_DEFAULT, ...customArticles].map(a => ({...a, folder: articleFolderOverrides[a.id] || a.folder || '我的文章'})).filter(a => !deletedFolders.includes(a.folder));
+}
+function allArticleFolders(){
+  return [...new Set([...allArticles().map(a=>a.folder), ...articleFolders])].filter(f => !deletedFolders.includes(f));
+}
+function allPoolForPractice(source){
+  if(source==='vocab') return allVocab().map(x=>({...x, kind:'vocab'}));
+  if(source==='verb') return [...VERB_DEFAULT.map(x=>({...x, kind:'verb'})), ...GRAMMAR_DEFAULT.map(x=>({...x, kind:'grammar'}))];
+  return [...allVocab().map(x=>({...x, kind:'vocab'})), ...VERB_DEFAULT.map(x=>({...x, kind:'verb'})), ...GRAMMAR_DEFAULT.map(x=>({...x, kind:'grammar'}))];
+}
+function allCategories(){
+  return [...new Set([...allVocab().map(x=>x.cat), ...pinnedCategories])].filter(c => !deletedCategories.includes(c));
+}
+
+/* ================= NAV / UTILS ================= */
+function showToast(msg){
+  const old=document.getElementById('toastEl'); if(old) old.remove();
+  const t=document.createElement('div'); t.id='toastEl'; t.className='toast'; t.textContent=msg;
+  document.getElementById('app').appendChild(t); setTimeout(()=>{ t.remove(); }, 2600);
+}
+window.alert = function(m){ showToast(String(m)); };
+function switchTab(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  document.getElementById('view-'+tab).classList.remove('hidden');
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  const titles = {cards:['字卡學習','點卡片翻面，左右滑動切換'], practice:['拼寫練習','聽寫／填空／造句'], reading:['文章閱讀','選取文字即可加筆記'], quiz:['選擇題測驗','即時批改與解析'], me:['我的學習','資料管理與統計']};
+  document.getElementById('topTitle').textContent = titles[tab][0];
+  document.getElementById('topSub').textContent = titles[tab][1];
+  if(tab==='cards') renderCards();
+  if(tab==='practice') renderPractice();
+  if(tab==='reading') renderReadingList();
+  if(tab==='quiz') renderQuizSetup();
+  if(tab==='me') renderMe();
+}
+document.querySelectorAll('nav.tabbar button').forEach(b=>b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+function openModal(html){ document.getElementById('modalBody').innerHTML = html; document.getElementById('modalBg').classList.remove('hidden'); }
+function closeModal(){ document.getElementById('modalBg').classList.add('hidden'); }
+document.getElementById('modalBg').addEventListener('click', e=>{ if(e.target.id==='modalBg') closeModal(); });
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function normalizeStr(s, ignoreAccents){
+  s = (s||'').trim().toLowerCase();
+  s = s.replace(/[.。,，!！?？;；:：]/g, '').replace(/\s+/g, ' ').trim();
+  if(ignoreAccents) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return s;
+}
+function levenshtein(a,b){
+  const m=a.length, n=b.length;
+  const dp = Array.from({length:m+1}, ()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+  return dp[m][n];
+}
+function similarity(a,b){ return 1 - levenshtein(a,b)/Math.max(a.length, b.length, 1); }
+
+/* ================= 1) FLASHCARDS ================= */
+let cardState = { pool: [], idx: 0, flipped: false, filterCat: 'ALL' };
+function buildCardPool(){
+  let pool = cardState.filterCat==='ALL' ? allVocab() : allVocab().filter(w=>w.cat===cardState.filterCat);
+  cardState.pool = shuffle(pool); cardState.idx = 0; cardState.flipped = false;
+}
+function renderCards(){
+  if(cardState.pool.length===0) buildCardPool();
+  const cats = allCategories(), counts = {};
+  allVocab().forEach(w=>{ counts[w.cat] = (counts[w.cat]||0) + 1; });
+  let selectHtml = `<select onchange="setCardFilter(this.value)" style="font-weight:700; margin-bottom:14px;">
+    <option value="ALL" ${cardState.filterCat==='ALL'?'selected':''}>全部 (${allVocab().length})</option>` +
+    cats.map(c=>`<option value="${escapeHtml(c)}" ${cardState.filterCat===c?'selected':''}>${escapeHtml(c)} (${counts[c]||0})</option>`).join('') + `</select>`;
+  let body;
+  if(cardState.pool.length===0){
+    body = `<div class="empty-hint">這個分類目前沒有單字，換一個分類看看，或按右下角新增單字。</div>`;
+  } else {
+    const w = cardState.pool[cardState.idx];
+    body = `<div class="flash-wrap">
+      <div class="flash-progress">${cardState.idx+1} / ${cardState.pool.length}　${escapeHtml(w.cat)}</div>
+      <div class="flashcard" id="flipcard" onclick="flipCard()">
+        <div class="pos-tag">${escapeHtml(w.pos||'')}</div>
+        ${!cardState.flipped ? `<div class="fr-word">${escapeHtml(w.french)}</div><div class="flip-hint">👆 點擊看意思</div>` :
+        `<div class="fr-word" style="font-size:20px;">${escapeHtml(w.french)}</div>
+         <div class="back">${escapeHtml(w.chinese)}<br>${escapeHtml(w.english)}</div>
+         ${w.example?`<div class="example">${escapeHtml(w.example)}</div>`:''}`}
+      </div>
+      <div class="flash-audio-row">
+        <button class="btn btn-outline" onclick="flashSpeak()">🔊 播放發音</button>
+        <button class="btn btn-outline" id="pronounceBtn" onclick="flashPronounce()">🎤 練習發音</button>
+      </div>
+      <div id="pronounceResult" style="width:100%;"></div>
+      <div class="flash-actions">
+        <button class="btn btn-bad" onclick="gradeCard(false)">😕 不熟</button>
+        <button class="btn btn-good" onclick="gradeCard(true)">😀 記住了</button>
+      </div>
+      <div class="flash-nav">
+        <button onclick="stepCard(-1)">‹</button>
+        <button onclick="flipCard()" style="font-size:14px;">🔄 翻面</button>
+        <button onclick="openCardTag()" style="font-size:14px;">🏷️ 分類</button>
+        <button onclick="stepCard(1)">›</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('view-cards').innerHTML = selectHtml + '<div id="wgBox">' + widgetHtml() + '</div>' + body + `<button class="fab fab-secondary" onclick="openImportModal()" title="批次匯入 Excel/PDF">📂</button><button class="fab" onclick="openAddWordModal()">＋</button>`;
+  attachSwipe(document.getElementById('flipcard'));
+}
+function setCardFilter(c){ cardState.filterCat = c; buildCardPool(); renderCards(); }
+function flipCard(){ cardState.flipped = !cardState.flipped; renderCards(); }
+function stepCard(dir){
+  if(cardState.pool.length===0) return;
+  cardState.idx = (cardState.idx + dir + cardState.pool.length) % cardState.pool.length;
+  cardState.flipped = false; renderCards();
+}
+function gradeCard(good){
+  const w = cardState.pool[cardState.idx]; if(!w) return;
+  const p = progress[w.id] || {box:1, seen:0, correct:0, wrong:0};
+  p.seen++;
+  if(good){ p.correct++; p.box = Math.min(5, p.box+1); } else { p.wrong++; p.box = 1; }
+  const intervals = [0,1,3,7,16,30];
+  const d = new Date(); d.setDate(d.getDate() + intervals[p.box-1]);
+  p.due = d.toISOString().slice(0,10);
+  progress[w.id] = p; saveAll(); stepCard(1);
+}
+function attachSwipe(el){
+  if(!el) return;
+  let x0=null;
+  el.addEventListener('touchstart', e=>{ x0=e.touches[0].clientX; }, {passive:true});
+  el.addEventListener('touchend', e=>{
+    if(x0===null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if(Math.abs(dx) > 60) stepCard(dx<0?1:-1);
+    x0=null;
+  }, {passive:true});
+}
+function flashSpeak(){ const w = cardState.pool[cardState.idx]; if(w) speakFr(w.french); }
+function flashPronounce(){
+  const w = cardState.pool[cardState.idx]; if(!w) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const resultDiv = document.getElementById('pronounceResult'), btn = document.getElementById('pronounceBtn');
+  if(!SR){ resultDiv.innerHTML = `<div class="feedback no">⚠️ 這個瀏覽器不支援語音辨識。建議用 iPhone Safari 或 Android Chrome 開啟。</div>`; return; }
+  const rec = new SR(); rec.lang = 'fr-FR'; rec.interimResults = false; rec.maxAlternatives = 1;
+  btn.textContent = '🎙️ 聆聽中...'; btn.classList.add('listening'); resultDiv.innerHTML = '';
+  rec.onresult = (e) => {
+    const said = e.results[0][0].transcript;
+    const score = similarity(normalizeStr(said, true), normalizeStr(w.french, true));
+    let msg, cls;
+    if(score >= 0.85){ msg = `✅ 很棒！辨識到「${escapeHtml(said)}」，跟「${escapeHtml(w.french)}」很接近`; cls='ok'; }
+    else if(score >= 0.5){ msg = `🟡 有點接近～辨識到「${escapeHtml(said)}」，目標是「${escapeHtml(w.french)}」`; cls='no'; }
+    else { msg = `❌ 辨識到「${escapeHtml(said)}」，差蠻多的，點🔊聽正確發音再試一次`; cls='no'; }
+    resultDiv.innerHTML = `<div class="feedback ${cls}">${msg}</div>`;
+  };
+  rec.onerror = (e) => { resultDiv.innerHTML = `<div class="feedback no">⚠️ 錄音發生問題（${escapeHtml(e.error||'')}），請確認已允許麥克風權限</div>`; };
+  rec.onend = () => { btn.textContent = '🎤 練習發音'; btn.classList.remove('listening'); };
+  try{ rec.start(); }catch(err){ resultDiv.innerHTML = `<div class="feedback no">⚠️ 無法啟動錄音，請再試一次</div>`; }
+}
+function openAddWordModal(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ 新增單字</h3>
+    <label class="field-label">📷 拍照 / 選圖辨識文字（選填）</label>
+    <input type="file" accept="image/*" capture="environment" id="ocrFile">
+    <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="runOcr()">開始辨識文字</button>
+    <div id="ocrStatus" style="font-size:12px; color:var(--muted); margin-top:6px;"></div>
+    <textarea id="ocrResult" rows="3" placeholder="辨識結果會顯示在這裡，可自行修改，再按下方按鈕填入欄位" style="margin-top:6px;"></textarea>
+    <div class="btn-row" style="margin-top:6px;">
+      <button class="btn btn-ghost" onclick="document.getElementById('nwFr').value = document.getElementById('ocrResult').value.trim();">↓ 填入法文欄位</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('nwCn').value = document.getElementById('ocrResult').value.trim();">↓ 填入中文欄位</button>
+    </div>
+    <div style="font-size:11px; color:var(--muted); margin:6px 0 14px;">＊對印刷體文字辨識效果較好，手寫字不一定準確，請自行核對修改。第一次使用需要網路連線（下載辨識模型），之後功能都跟平常一樣可離線使用。</div>
+    <hr style="border:none; border-top:1px solid var(--border); margin-bottom:14px;">
+
+    <label class="field-label">法文</label><input type="text" id="nwFr" placeholder="ex. la bibliothèque">
+    <label class="field-label">詞性 (可留空)</label><input type="text" id="nwPos" placeholder="n.f. / v. / adj. ...">
+    <label class="field-label">中文</label><input type="text" id="nwCn" placeholder="圖書館">
+    <label class="field-label">英文解釋</label><input type="text" id="nwEn" placeholder="library">
+    <label class="field-label">例句 (可留空)</label><input type="text" id="nwEx" placeholder="Je vais à la bibliothèque.">
+    <label class="field-label">分類</label>
+    <select id="nwCat" onchange="document.getElementById('nwCatNew').style.display = this.value==='__NEW__' ? 'block' : 'none'">
+      ${allCategories().map(c=>`<option value="${escapeHtml(c)}" ${c===CAT_WORD?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+      <option value="__NEW__">➕ 新增新分類...</option>
+    </select>
+    <input type="text" id="nwCatNew" placeholder="輸入新分類名稱" style="display:none; margin-top:8px;">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveNewWord()">儲存</button>
+    </div>`);
+}
+function saveNewWord(){
+  const fr = document.getElementById('nwFr').value.trim(), cn = document.getElementById('nwCn').value.trim();
+  if(!fr || !cn){ alert('至少要填法文與中文喔'); return; }
+  const catSel = document.getElementById('nwCat').value;
+  const cat = (catSel === '__NEW__' ? document.getElementById('nwCatNew').value.trim() : catSel) || CAT_WORD;
+  customVocab.push({ id:'c'+Date.now(), cat, french:fr, pos:document.getElementById('nwPos').value.trim(), chinese:cn, english:document.getElementById('nwEn').value.trim(), example:document.getElementById('nwEx').value.trim() });
+  saveAll(); closeModal(); cardState.pool=[]; renderCards();
+}
+
+/* ================= 2) PRACTICE ================= */
+let practiceState = { mode:'spelling', source:'vocab', category:'ALL', current:null, streak:0 };
+function practiceCategoryOptions(){
+  if(practiceState.source==='vocab') return allCategories();
+  if(practiceState.source==='verb') return [...new Set([...VERB_DEFAULT.map(x=>x.cat), ...GRAMMAR_DEFAULT.map(x=>x.cat)])];
+  return [...new Set([...allCategories(), ...VERB_DEFAULT.map(x=>x.cat), ...GRAMMAR_DEFAULT.map(x=>x.cat)])];
+}
+function renderPractice(){
+  practiceState.mode='spelling'; practiceState.source='all'; practiceState.category='ALL';
+  document.getElementById('view-practice').innerHTML = `
+    <div class="chip-row" style="align-items:center;">
+      <div class="chip active">全部</div>
+      <a class="btn btn-outline" style="padding:6px 14px; font-size:12.5px; text-decoration:none; border-radius:20px;" href="https://fr.jiaojq.vip/" target="_blank" rel="noopener">📒 小語筆記 ↗</a>
+    </div>
+    <div id="practiceBody" class="card"></div>
+    <div id="streakLine" style="text-align:center; color:var(--muted); font-size:12px; margin-top:6px;">連續答對：${practiceState.streak} 🔥</div>`;
+  nextPracticeItem();
+}
+function setPMode(m){ practiceState.mode=m; renderPractice(); }
+function setPSource(s){ practiceState.source=s; practiceState.category='ALL'; renderPractice(); }
+function setPCategory(c){ practiceState.category=c; renderPractice(); }
+function nextPracticeItem(){
+  let pool = allPoolForPractice(practiceState.source).filter(x=>x.french);
+  if(practiceState.category!=='ALL') pool = pool.filter(x=>x.cat===practiceState.category);
+  if(pool.length===0){ document.getElementById('practiceBody').innerHTML = '<div class="empty-hint">這個分類目前沒有可練習的內容</div>'; return; }
+  practiceState.current = pool[Math.floor(Math.random()*pool.length)];
+  renderPracticeBody();
+}
+function renderPracticeBody(){
+  const w = practiceState.current, box = document.getElementById('practiceBody');
+  if(!w) return;
+  if(practiceState.mode==='spelling'){
+    const disp = w.french.split('').map(ch=> ch===' '?'　':(/[a-zàâäéèêëïîôöùûüç'\-]/i.test(ch)?'＿':ch)).join(' ');
+    box.innerHTML = `
+      <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:8px;">聽發音、看中英文提示，拼出完整法文</div>
+      <button class="speaker-btn" onclick="speakFr(practiceState.current.french)">🔊</button>
+      <div class="practice-meaning" style="font-size:16px; font-weight:700; color:var(--text);">${escapeHtml(w.chinese||'')}</div>
+      <div class="practice-meaning">${escapeHtml(w.english||'')}</div>
+      <div class="blank-display">${disp}</div>
+      <input type="text" id="dictInput" placeholder="輸入完整法文..." autocomplete="off" autocapitalize="off">
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="hintLetter()">💡 提示</button>
+        <button class="btn btn-ghost" onclick="revealAnswer()">顯示答案</button>
+        <button class="btn btn-primary" onclick="checkDictation()">送出</button>
+      </div>
+      <div id="pFeedback"></div>`;
+  } else {
+    box.innerHTML = `
+      <div style="text-align:center; color:var(--muted); font-size:12px; margin-bottom:8px;">用這個單字／句型，自己造一個法文句子</div>
+      <div class="practice-word">${escapeHtml(w.french)}</div>
+      <div class="practice-meaning">${escapeHtml(w.chinese||'')} ／ ${escapeHtml(w.english||'')}</div>
+      <textarea id="sentInput" rows="3" placeholder="在這裡寫下你的法文句子..."></textarea>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-ghost" onclick="checkSentence()">自我檢查</button>
+        <button class="btn btn-primary" onclick="revealExample()">顯示範例例句</button>
+      </div>
+      <div id="pFeedback"></div>
+      <div style="font-size:11.5px; color:var(--muted); margin-top:8px;">＊此功能非 AI 文法批改，僅提供簡單檢查與範例例句供你自行比對。</div>`;
+  }
+}
+function getFrenchVoices(){
+  if(!('speechSynthesis' in window)) return [];
+  return speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+}
+function pickBestFrenchVoice(voices){
+  if(!voices.length) return null;
+  const g = voices.find(v => /google\s*fran[cç]ais/i.test(v.name)) || voices.find(v => /google/i.test(v.name));
+  if(g) return g;
+  const preferred = ['thomas','audrey','amelie','amélie','aurelie','aurélie','chantal','celine','céline','virginie','marie','google français','google francais','microsoft henri','microsoft julie','ines'];
+  for(const key of preferred){ const f = voices.find(v => v.name.toLowerCase().includes(key)); if(f) return f; }
+  return voices.find(v => v.lang.toLowerCase()==='fr-fr') || voices[0];
+}
+function speakFr(text, rate){
+  if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音朗讀'); return; }
+  const u = new SpeechSynthesisUtterance(text); u.lang = 'fr-FR'; u.rate = rate || 0.85;
+  const voices = getFrenchVoices();
+  const voice = pickBestFrenchVoice(voices);
+  if(voice) u.voice = voice;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function populateVoiceSelect(){
+  const el = document.getElementById('voiceStatus'); if(!el) return;
+  const voices = getFrenchVoices(), best = pickBestFrenchVoice(voices);
+  if(!best){ el.textContent = '目前這個裝置找不到法文語音。'; return; }
+  const isGoogle = /google/i.test(best.name);
+  el.innerHTML = isGoogle ? `✅ 目前使用：<b>${escapeHtml(best.name)}</b>`
+    : `目前使用：<b>${escapeHtml(best.name)}</b><br><span style="font-size:11.5px;">這個裝置沒有 Google français，已自動改用系統內建的法文語音。</span>`;
+}
+function testVoice(){ speakFr('Bonjour ! Je suis content de vous aider à apprendre le français.'); }
+if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged = () => populateVoiceSelect(); }
+
+function hintLetter(){ const w = practiceState.current, inp = document.getElementById('dictInput'); if(inp && !inp.value) inp.value = w.french[0]; }
+function checkDictation(){
+  const w = practiceState.current, val = document.getElementById('dictInput').value;
+  const ok = normalizeStr(val, prefs.ignoreAccents) === normalizeStr(w.french, prefs.ignoreAccents);
+  const fb = document.getElementById('pFeedback');
+  if(ok){
+    practiceState.streak++;
+    fb.innerHTML = `<div class="feedback ok">✅ 正確！${escapeHtml(w.french)}</div>`;
+    setTimeout(()=>{ nextPracticeItem(); const s=document.getElementById('streakLine'); if(s) s.textContent = '連續答對：'+practiceState.streak+' 🔥'; }, 900);
+  } else {
+    practiceState.streak = 0;
+    fb.innerHTML = `<div class="feedback no">❌ 正確答案是：<b>${escapeHtml(w.french)}</b>（你輸入：${escapeHtml(val||'(空白)')}）</div>
+      <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">下一題</button>`;
+  }
+}
+function revealAnswer(){
+  const w = practiceState.current;
+  document.getElementById('pFeedback').innerHTML = `<div class="feedback ok">答案：<b>${escapeHtml(w.french)}</b></div>
+    <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">下一題</button>`;
+}
+function checkSentence(){
+  const w = practiceState.current, val = document.getElementById('sentInput').value.trim(), fb = document.getElementById('pFeedback');
+  if(!val){ fb.innerHTML = `<div class="feedback no">先寫一句看看吧！</div>`; return; }
+  const stem = normalizeStr(w.french.split(' ')[0].replace(/^(se |s'|l'|le |la |les |un |une |des )/,''), true);
+  const hasWord = normalizeStr(val, true).includes(stem), longEnough = val.split(' ').length >= 3;
+  fb.innerHTML = (hasWord && longEnough) ? `<div class="feedback ok">✅ 看起來有包含目標字，句子長度也 OK！點「顯示範例例句」比對文法。</div>`
+    : !hasWord ? `<div class="feedback no">⚠️ 好像沒看到「${escapeHtml(w.french)}」這個字／字根，再檢查一下？</div>`
+    : `<div class="feedback no">⚠️ 句子可以再完整一點喔（至少主詞＋動詞）。</div>`;
+}
+function revealExample(){
+  const w = practiceState.current, ex = w.example || w.present || '（此項目沒有附例句）';
+  document.getElementById('pFeedback').innerHTML = `<div class="feedback ok">📘 範例例句：<br><b>${escapeHtml(ex)}</b></div>
+    <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="nextPracticeItem()">換下一個</button>`;
+}
+
+/* ================= 3) READING ================= */
+let readingState = { openId: null, filterFolder: 'ALL' };
+function renderReadingList(){
+  const arts = allArticles(), folders = allArticleFolders(), counts = {};
+  arts.forEach(a=>{ counts[a.folder] = (counts[a.folder]||0) + 1; });
+  const shown = readingState.filterFolder==='ALL' ? arts : arts.filter(a=>a.folder===readingState.filterFolder);
+  let selectHtml = `<select onchange="setFolderFilter(this.value)" style="font-weight:700; margin-bottom:14px;">
+    <option value="ALL" ${readingState.filterFolder==='ALL'?'selected':''}>📁 全部 (${arts.length})</option>` +
+    folders.map(f=>`<option value="${escapeHtml(f)}" ${readingState.filterFolder===f?'selected':''}>📁 ${escapeHtml(f)} (${counts[f]||0})</option>`).join('') + `</select>`;
+  let html = shown.map(a => {
+    const n = (notesStore[a.id]||[]).length;
+    const meta = a.type==='link' ? `🔗 外部連結・${escapeHtml(a.source||'')}　·　${n} 則筆記` : `${a.text.length} 字　·　${n} 則筆記`;
+    return `<div class="article-item" onclick="openArticle('${a.id}')"><div class="t">${a.type==='link'?'🔗 ':''}${escapeHtml(a.title)}</div><div class="meta">${meta}</div></div>`;
+  }).join('');
+  if(shown.length===0) html = '<div class="empty-hint">這個資料夾還沒有文章</div>';
+  document.getElementById('view-reading').innerHTML = selectHtml + html + `<button class="fab" onclick="openAddArticleModal()">＋</button>`;
+}
+function setFolderFilter(f){ readingState.filterFolder = f; renderReadingList(); }
+function openArticle(id){ readingState.openId = id; renderArticleDetail(); }
+let selectionWatcherBound = false;
+function bindSelectionWatcher(){
+  if(selectionWatcherBound) return; selectionWatcherBound = true;
+  document.addEventListener('selectionchange', () => {
+    const artText = document.getElementById('artText'), quoteInput = document.getElementById('quoteInput');
+    if(!artText || !quoteInput) return;
+    const sel = window.getSelection(); if(!sel || sel.rangeCount === 0) return;
+    const text = sel.toString().trim(); if(!text) return;
+    if(artText.contains(sel.getRangeAt(0).commonAncestorContainer)) quoteInput.value = text;
+  });
+}
+function renderArticleDetail(){
+  const a = allArticles().find(x=>x.id===readingState.openId);
+  if(!a){ renderReadingList(); return; }
+  const notes = notesStore[a.id] || [], isLink = a.type === 'link';
+  const otherFolders = allArticleFolders().filter(f=>f!==a.folder);
+  document.getElementById('view-reading').innerHTML = `
+    <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="readingState.openId=null; renderReadingList();">‹ 返回文章列表</button>
+    <h2 class="section-title">${escapeHtml(a.title)}</h2>
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="font-size:12.5px; color:var(--muted);">📁 目前資料夾：<b style="color:var(--text);">${escapeHtml(a.folder)}</b></div>
+        <button class="btn btn-outline" style="padding:6px 10px; font-size:11.5px; flex:0 0 auto;" onclick="toggleMoveFolderBox()">搬移資料夾</button>
+      </div>
+      <div id="moveFolderBox" style="display:none; margin-top:10px;">
+        <select id="moveFolderTarget" onchange="document.getElementById('moveFolderNewName').style.display = this.value==='__NEW__' ? 'block' : 'none';">
+          ${otherFolders.map(f=>`<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('')}
+          <option value="__NEW__">➕ 新增資料夾...</option>
+        </select>
+        <input type="text" id="moveFolderNewName" placeholder="輸入新資料夾名稱" style="display:none; margin-top:8px;">
+        <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="confirmMoveArticleFolder()">✅ 確認搬移</button>
+      </div>
+    </div>
+    ${isLink ? `<div class="card">
+        <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">來源：${escapeHtml(a.source||'')}</div>
+        <div style="font-size:13.5px; margin-bottom:12px; line-height:1.7;">${escapeHtml(a.desc||'')}</div>
+        <a class="btn btn-primary" style="display:block; text-align:center; text-decoration:none;" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">🔗 前往原文閱讀</a>
+      </div>` : `<div class="article-body" id="artText">${escapeHtml(a.text)}</div>`}
+    <div class="sel-panel">
+      <div>✏️ ${isLink? '讀完後，把想記錄的句子貼在下面' : '選取上方文字會自動帶入下面的引用欄'}</div>
+      <label class="field-label" style="margin-top:8px;">引用句子（可留空）</label>
+      <input type="text" id="quoteInput" placeholder="要引用的句子...">
+      <label class="field-label">筆記內容</label>
+      <textarea id="noteInput" rows="2" placeholder="寫下你的筆記、文法問題、心得..."></textarea>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="addNoteFromSelection()">＋ 加筆記</button>
+    </div>
+    <h2 class="section-title">📌 筆記（${notes.length}）</h2>
+    ${notes.length ? notes.map((n,i)=>`<div class="note-item"><button class="del" onclick="deleteNote(${i})">刪除</button>
+      ${n.quote?`<div class="quote">「${escapeHtml(n.quote)}」</div>`:''}<div class="txt">${escapeHtml(n.note)}</div></div>`).join('') : '<div class="empty-hint">還沒有筆記</div>'}`;
+  bindSelectionWatcher();
+}
+function addNoteFromSelection(){
+  const quote = document.getElementById('quoteInput').value.trim(), note = document.getElementById('noteInput').value.trim();
+  if(!note){ alert('筆記內容不能是空的喔'); return; }
+  const id = readingState.openId;
+  (notesStore[id] = notesStore[id] || []).push({quote, note, ts: Date.now()});
+  saveAll(); renderArticleDetail();
+}
+function deleteNote(i){ notesStore[readingState.openId].splice(i,1); saveAll(); renderArticleDetail(); }
+function openAddArticleModal(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ 新增文章</h3>
+    <label class="field-label">標題</label><input type="text" id="artTitle" placeholder="文章標題">
+    <label class="field-label">內文</label><textarea id="artBody" rows="7" placeholder="貼上法文文章內容..."></textarea>
+    <label class="field-label">資料夾</label>
+    <select id="artFolder" onchange="document.getElementById('artFolderNew').style.display = this.value==='__NEW__' ? 'block' : 'none';">${allArticleFolders().map(f=>`<option value="${escapeHtml(f)}" ${f==='我的文章'?'selected':''}>${escapeHtml(f)}</option>`).join('')}<option value="__NEW__">➕ 新增資料夾...</option></select>
+    <input type="text" id="artFolderNew" placeholder="輸入新資料夾名稱" style="display:none; margin-top:8px;">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveNewArticle()">儲存</button>
+    </div>`);
+}
+function saveNewArticle(){
+  const title = document.getElementById('artTitle').value.trim(), text = document.getElementById('artBody').value.trim();
+  if(!title || !text){ alert('標題與內文都要填喔'); return; }
+  const folderSel = document.getElementById('artFolder').value;
+  const folder = (folderSel === '__NEW__' ? document.getElementById('artFolderNew').value.trim() : folderSel) || '我的文章';
+  customArticles.push({id:'ca'+Date.now(), title, text, type:'text', folder});
+  saveAll(); closeModal(); renderReadingList();
+}
+
+/* ================= 4) QUIZ ================= */
+let quizState = { questions:[], idx:0, score:0, wrong:[], answered:false };
+function renderQuizSetup(){
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="card">
+      <h2 class="section-title">測驗設定</h2>
+      <label class="field-label">題目來源</label>
+      <select id="qSource"><option value="vocab">單字庫</option><option value="verb">動詞句型庫</option><option value="all">全部</option></select>
+      <label class="field-label">分類（可選）</label>
+      <select id="qCat"><option value="ALL">不限分類</option>${allCategories().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+      <label class="field-label">出題方向</label>
+      <select id="qDir"><option value="fr2cn">看法文，選中／英文意思</option><option value="cn2fr">看中文，選法文</option></select>
+      <label class="field-label">題數</label>
+      <select id="qCount"><option value="5">5 題</option><option value="10" selected>10 題</option><option value="20">20 題</option></select>
+      <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="startQuiz()">開始測驗</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${quizHistory.played}</div><div class="lbl">已測驗題數</div></div>
+      <div class="stat-box"><div class="num">${quizHistory.total? Math.round(quizHistory.correct/quizHistory.total*100):0}%</div><div class="lbl">歷史正確率</div></div>
+    </div>`;
+}
+function startQuiz(){
+  const source = document.getElementById('qSource').value, cat = document.getElementById('qCat').value,
+        dir = document.getElementById('qDir').value, count = parseInt(document.getElementById('qCount').value);
+  let pool = allPoolForPractice(source).filter(x=>x.french && (x.chinese||x.english));
+  if(cat!=='ALL') pool = pool.filter(x=>x.cat===cat);
+  if(pool.length < 4){ alert('這個範圍的題目太少了（至少需要4個），換個範圍試試'); return; }
+  pool = shuffle(pool).slice(0, Math.min(count, pool.length));
+  quizState = { questions: pool.map(w=>({item:w, dir})), idx:0, score:0, wrong:[], answered:false };
+  renderQuiz();
+}
+function meaningOf(w){ return [w.chinese, w.english].filter(Boolean).join(' / '); }
+function renderQuiz(){
+  const q = quizState.questions[quizState.idx];
+  if(!q){ renderQuizResult(); return; }
+  const w = q.item;
+  const distractors = shuffle(allPoolForPractice('all').filter(x=>x.french!==w.french && (x.chinese||x.english))).slice(0,3);
+  const options = shuffle([w, ...distractors]), letters = ['A','B','C','D'];
+  quizState.answered = false;
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="quiz-meta"><span>第 ${quizState.idx+1} / ${quizState.questions.length} 題</span><span>得分 ${quizState.score}</span></div>
+    <div class="card">
+      <div class="quiz-q">${escapeHtml(q.dir==='fr2cn' ? w.french : meaningOf(w))}</div>
+      ${options.map((o,i)=>`<button class="quiz-opt" id="opt${i}" onclick="answerQuiz(${i})"><span class="letter">${letters[i]}</span>${escapeHtml(q.dir==='fr2cn'? meaningOf(o) : o.french)}</button>`).join('')}
+      <div id="quizFeedback"></div>
+    </div>`;
+  quizState._correctIdx = options.findIndex(o=>o.french===w.french);
+}
+function answerQuiz(i){
+  if(quizState.answered) return; quizState.answered = true;
+  const correct = i === quizState._correctIdx, w = quizState.questions[quizState.idx].item;
+  document.getElementById('opt'+quizState._correctIdx).classList.add('correct');
+  if(!correct) document.getElementById('opt'+i).classList.add('wrong');
+  if(correct) quizState.score++; else quizState.wrong.push(w);
+  quizHistory.played++; quizHistory.total++; if(correct) quizHistory.correct++;
+  saveAll();
+  const ex = w.example || w.present || '';
+  document.getElementById('quizFeedback').innerHTML = `
+    <div class="quiz-explain">${correct?'✅ 答對了！':'❌ 答錯了，正確答案已標綠。'}　<b>${escapeHtml(w.french)}</b> — ${escapeHtml(meaningOf(w))}${ex?'<br>例句：'+escapeHtml(ex):''}</div>
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="quizState.idx++; renderQuiz();">${quizState.idx+1<quizState.questions.length?'下一題':'看結果'}</button>`;
+}
+function renderQuizResult(){
+  const total = quizState.questions.length;
+  document.getElementById('view-quiz').innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div style="font-size:15px; color:var(--muted);">測驗結果</div>
+      <div style="font-size:36px; font-weight:800; color:var(--primary-light); margin:8px 0;">${quizState.score} / ${total}</div>
+      <div style="color:var(--muted); font-size:13px;">正確率 ${Math.round(quizState.score/total*100)}%</div>
+    </div>
+    ${quizState.wrong.length? `<h2 class="section-title">答錯的題目</h2><div class="card">${quizState.wrong.map(w=>`<div class="result-row"><span>${escapeHtml(w.french)}</span><span style="color:var(--muted);">${escapeHtml(meaningOf(w))}</span></div>`).join('')}</div>` : ''}
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="renderQuizSetup()">回到測驗設定</button>`;
+}
+
+/* ================= 5) ME ================= */
+function renderMe(){
+  const mastered = Object.values(progress).filter(p=>p.box>=5).length;
+  document.getElementById('view-me').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num">${allVocab().length}</div><div class="lbl">單字總數</div></div>
+      <div class="stat-box"><div class="num">${customVocab.length}</div><div class="lbl">我新增的單字</div></div>
+      <div class="stat-box"><div class="num">${mastered}</div><div class="lbl">已熟記單字</div></div>
+      <div class="stat-box"><div class="num">${allArticles().length}</div><div class="lbl">文章篇數</div></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">📂 匯入與管理單字</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">
+        有現成的 Excel 單字表？可以整批匯入，不用一個一個手打。
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="openImportModal()">📂 批次匯入 (Excel/PDF)</button>
+        <button class="btn btn-outline" onclick="openManageWordsModal()">🗂️ 管理我的單字</button>
+      </div>
+      <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="openManageCategoriesModal()">🏷️ 搬移單字／合併／刪除分類</button>
+      <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="openManageFoldersModal()">📁 管理閱讀資料夾（搬移／合併／刪除）</button>
+    </div>
+    <div class="card">
+      <h2 class="section-title">🔊 語音朗讀設定</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">固定優先使用 Google français；裝置沒有時會自動改用系統法文語音。</div>
+      <div id="voiceStatus" style="font-size:13px; margin-bottom:4px;"></div>
+      <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="testVoice()">🔊 測試發音</button>
+    </div>
+    <div class="card">
+      <h2 class="section-title">🏷️ 分類標籤</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px; line-height:1.6;">新增標籤、幫現有標籤改名（改成已存在的名稱就是合併）、刪除標籤（可選擇把單字搬走，或連單字一起刪）。</div>
+      <button class="btn btn-outline" style="width:100%;" onclick="openTagManager()">🏷️ 編輯／新增標籤</button>
+    </div>
+    <div class="card">
+      <h2 class="section-title">📲 放到手機桌面（提醒事項小工具）</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:8px; line-height:1.6;">網頁本身無法變成桌面小工具，但 iPhone「提醒事項」的小工具就是你截圖的樣子，圓圈可以直接點。把單字複製進提醒事項，就能放上桌面。</div>
+      <select id="rmCat" onchange="makeReminderText()"><option value="ALL">全部分類</option>${allCategories().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+      <div class="btn-row" style="margin-top:8px;">
+        <select id="rmCount" onchange="makeReminderText()"><option value="5">5 個</option><option value="10" selected>10 個</option><option value="20">20 個</option></select>
+        <select id="rmFmt" onchange="makeReminderText()"><option value="fr">只有法文</option><option value="both">法文 — 中文/英文</option></select>
+      </div>
+      <textarea id="rmText" rows="6" style="margin-top:8px;"></textarea>
+      <div id="rmMsg" style="font-size:12.5px; color:var(--good); margin-top:4px;"></div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-ghost" onclick="makeReminderText()">🔄 換一批</button>
+        <button class="btn btn-primary" onclick="copyReminderText()">📋 複製</button>
+      </div>
+      <div style="font-size:12px; color:var(--muted); margin-top:10px; line-height:1.7;">
+        ① 按「複製」<br>② 開啟「提醒事項」→ 新增一個清單（例如「法文單字」）→ 貼上，通常每一行會變成一個提醒事項<br>③ 主畫面長按空白處 →「＋」→ 提醒事項 → 選這個清單
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">練習設定</h2>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13.5px;">
+        <input type="checkbox" id="ignoreAccentsChk" ${prefs.ignoreAccents?'checked':''} onchange="prefs.ignoreAccents=this.checked; saveAll();" style="width:auto;">
+        拼寫檢查時忽略重音符號（é/è/ê 視為相同）
+      </label>
+    </div>
+    <div class="card">
+      <h2 class="section-title">資料備份</h2>
+      <div style="font-size:12.5px; color:var(--muted); margin-bottom:10px;">
+        本 App 的資料（新增單字、文章、筆記、學習進度）都儲存在你手機瀏覽器的本機空間裡。清除瀏覽器資料會導致資料遺失，建議定期匯出備份。匯入備份時會自動略過重複的單字/文章，只會加入還沒有的內容，不會覆蓋掉你之後新增的東西。
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="exportBackup()">匯出備份</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">匯入備份</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importBackup(event)">
+    </div>
+    <div class="card">
+      <h2 class="section-title">加入手機主畫面</h2>
+      <div style="font-size:12.5px; color:var(--muted); line-height:1.7;">
+        iPhone：用 Safari 開啟此頁 → 按下方「分享」按鈕 → 「加入主畫面」<br>
+        Android：用 Chrome 開啟此頁 → 右上角選單 → 「新增至主畫面」<br>
+        加入後即可像 App 一樣點圖示開啟，離線也能使用（語音朗讀功能需要系統內建的法文語音）。
+      </div>
+    </div>
+    <div class="card"><button class="btn btn-bad" style="width:100%;" onclick="resetProgress()">重設學習進度</button></div>`;
+  populateVoiceSelect();
+  makeReminderText();
+}
+/* ---- 提醒事項樣式小工具（字卡頁最上方） ---- */
+let wgState = {cat:null, ids:[], ticking:null};
+function wgPool(){
+  const done = prefs.wgDone || {};
+  let pool = allVocab().filter(w=>w.french && !done[w.id]);
+  if(cardState.filterCat!=='ALL') pool = pool.filter(w=>w.cat===cardState.filterCat);
+  return pool;
+}
+function wgRefill(force){
+  const pool = wgPool(), ok = new Set(pool.map(w=>w.id));
+  if(force || wgState.cat!==cardState.filterCat) wgState.ids = [];
+  wgState.cat = cardState.filterCat;
+  wgState.ids = wgState.ids.filter(id=>ok.has(id));
+  const rest = pool.filter(w=>!wgState.ids.includes(w.id));
+  const sorted = [...shuffle(rest.filter(w=>w.french.length<=30)), ...shuffle(rest.filter(w=>w.french.length>30))];
+  while(wgState.ids.length<4 && sorted.length) wgState.ids.push(sorted.shift().id);
+}
+function widgetHtml(){
+  wgRefill(false);
+  const byId = {}; allVocab().forEach(w=>{ byId[w.id]=w; });
+  const label = cardState.filterCat==='ALL' ? '全部單字' : cardState.filterCat;
+  const rows = wgState.ids.map(id=>byId[id]).filter(Boolean).map(w=>`
+    <div class="wg-row ${wgState.ticking===w.id?'done':''}">
+      <div class="wg-circle" onclick="wgTick('${w.id}')">${wgState.ticking===w.id?'✓':''}</div>
+      <div class="wg-text" onclick="wgSpeak('${w.id}')">${escapeHtml(w.french)}</div>
+    </div>`).join('');
+  const icon = '<svg width="22" height="22" viewBox="0 0 22 22"><g fill="#fff"><circle cx="3" cy="4" r="1.9"/><circle cx="3" cy="11" r="1.9"/><circle cx="3" cy="18" r="1.9"/></g><g stroke="#fff" stroke-width="2.4" stroke-linecap="round"><line x1="8" y1="4" x2="19" y2="4"/><line x1="8" y1="11" x2="19" y2="11"/><line x1="8" y1="18" x2="19" y2="18"/></g></svg>';
+  return `<div class="wg">
+      <div class="wg-left"><div class="wg-icon">${icon}</div><div><div class="wg-num">${wgPool().length}</div><div class="wg-label">${escapeHtml(label)}</div></div></div>
+      <div class="wg-right">${rows || '<div class="wg-text" style="color:var(--muted); cursor:default;">🎉 這個分類都完成了</div>'}</div>
+    </div>
+    <div class="wg-tools"><span onclick="wgShuffle()">🔄 換一批</span><span onclick="wgReset()">↺ 重設打勾</span></div>`;
+}
+function renderWidget(){ const b=document.getElementById('wgBox'); if(b) b.innerHTML = widgetHtml(); }
+function wgTick(id){
+  if(wgState.ticking) return;
+  wgState.ticking = id; renderWidget();
+  setTimeout(()=>{
+    prefs.wgDone = prefs.wgDone || {}; prefs.wgDone[id] = true;
+    const p = progress[id] || {box:1, seen:0, correct:0, wrong:0};
+    p.seen++; p.correct++; p.box = Math.min(5, p.box+1);
+    const d = new Date(); d.setDate(d.getDate() + [0,1,3,7,16,30][p.box-1]); p.due = d.toISOString().slice(0,10);
+    progress[id] = p;
+    wgState.ticking = null; saveAll(); wgRefill(false); renderWidget();
+  }, 450);
+}
+function wgSpeak(id){ const w = allVocab().find(x=>x.id===id); if(w) speakFr(w.french); }
+function wgShuffle(){ wgRefill(true); renderWidget(); }
+function wgReset(){ prefs.wgDone = {}; saveAll(); wgRefill(true); renderWidget(); }
+
+/* ---- 標籤管理 ---- */
+let tagList = [], tagEditing = null, cardTagWordId = null;
+function openTagManager(){
+  tagList = allCategories();
+  const counts = {}; allVocab().forEach(w=>{ counts[w.cat] = (counts[w.cat]||0) + 1; });
+  openModal(`
+    <button class="modal-close" onclick="closeModal(); if(!document.getElementById('view-me').classList.contains('hidden')) renderMe();">✕</button>
+    <h3>🏷️ 編輯／新增標籤</h3>
+    <label class="field-label">新增標籤</label>
+    <div class="btn-row"><input type="text" id="newTagInput" placeholder="輸入新標籤名稱"><button class="btn btn-primary" style="flex:0 0 auto;" onclick="addTag()">新增</button></div>
+    <div id="tagMsg" style="color:var(--bad); font-size:12.5px; margin-top:6px;"></div>
+    <label class="field-label" style="margin-top:14px;">現有標籤</label>
+    <div style="max-height:46vh; overflow-y:auto;">
+      ${tagList.map((c,i)=>`<div class="tag-row">
+        <div style="flex:1; font-size:13.5px;"><b>${escapeHtml(c)}</b><br><span style="color:var(--muted); font-size:11px;">${counts[c]||0} 個單字</span></div>
+        <button class="btn btn-outline" style="padding:7px 10px; font-size:11.5px; flex:0 0 auto;" onclick="openRenameTag(${i})">改名</button>
+        <button class="btn btn-bad" style="padding:7px 10px; font-size:11.5px; flex:0 0 auto;" onclick="deleteTag(${i})">刪除</button>
+      </div>`).join('')}
+    </div>`);
+}
+function tagMsg(t){ const e=document.getElementById('tagMsg'); if(e) e.textContent=t; else showToast(t); }
+function addTag(){
+  const name = document.getElementById('newTagInput').value.trim();
+  if(!name){ tagMsg('請輸入標籤名稱'); return; }
+  if(allCategories().includes(name)){ tagMsg('這個標籤已經存在了'); return; }
+  pinnedCategories.push(name); saveAll(); cardState.pool = []; openTagManager();
+}
+function openRenameTag(i){
+  tagEditing = tagList[i];
+  openModal(`
+    <button class="modal-close" onclick="openTagManager()">✕</button>
+    <h3>✏️ 改名／合併標籤</h3>
+    <label class="field-label">「${escapeHtml(tagEditing)}」改成：</label>
+    <input type="text" id="renameTagInput" value="${escapeHtml(tagEditing)}">
+    <div style="font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6;">如果輸入的是已存在的標籤，這個標籤裡的單字會全部合併過去。</div>
+    <div id="tagMsg" style="color:var(--bad); font-size:12.5px; margin-top:6px;"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="openTagManager()">取消</button>
+      <button class="btn btn-primary" onclick="confirmRenameTag()">確認</button>
+    </div>`);
+}
+function confirmRenameTag(){
+  const old = tagEditing, nn = document.getElementById('renameTagInput').value.trim();
+  if(!nn){ tagMsg('請輸入標籤名稱'); return; }
+  if(nn===old){ openTagManager(); return; }
+  allVocab().filter(w=>w.cat===old).forEach(w=>{ wordCategoryOverrides[w.id] = nn; });
+  const wasPinned = pinnedCategories.includes(old);
+  pinnedCategories = pinnedCategories.filter(c=>c!==old);
+  if(wasPinned && !pinnedCategories.includes(nn)) pinnedCategories.push(nn);
+  deletedCategories = deletedCategories.filter(c=>c!==nn);
+  if(cardState.filterCat===old) cardState.filterCat = nn;
+  saveAll(); cardState.pool = []; openTagManager();
+}
+function deleteTag(i){
+  tagEditing = tagList[i];
+  const c = tagEditing, n = allVocab().filter(w=>w.cat===c).length;
+  const others = allCategories().filter(x=>x!==c);
+  let body;
+  if(n===0){
+    body = `<div style="font-size:13.5px; margin-bottom:14px;">這個標籤是空的，可以直接刪除。</div>
+      <div class="btn-row"><button class="btn btn-ghost" onclick="openTagManager()">取消</button><button class="btn btn-bad" onclick="confirmDeleteTag('none')">確認刪除</button></div>`;
+  } else {
+    body = `<div style="font-size:13.5px; margin-bottom:10px;">這個標籤裡有 <b>${n}</b> 個單字，要怎麼處理？</div>
+      ${others.length ? `<label class="field-label">方案一：單字搬到其他標籤</label>
+      <select id="delMoveTarget">${others.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('')}</select>
+      <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="confirmDeleteTag('move')">搬移單字並刪除標籤</button>` : ''}
+      <label class="field-label" style="margin-top:16px;">${others.length?'方案二：':''}連單字一起刪除（無法復原）</label>
+      <input type="text" id="delConfirmInput" placeholder="輸入 delete 確認" autocapitalize="off" autocomplete="off">
+      <button class="btn btn-bad" style="width:100%; margin-top:8px;" onclick="confirmDeleteTag('purge')">連單字一起刪除</button>
+      <div id="delMsg" style="color:var(--bad); font-size:12.5px; margin-top:6px;"></div>
+      <button class="btn btn-ghost" style="width:100%; margin-top:8px;" onclick="openTagManager()">取消</button>`;
+  }
+  openModal(`<button class="modal-close" onclick="openTagManager()">✕</button><h3>🗑️ 刪除標籤「${escapeHtml(c)}」</h3>${body}`);
+}
+function confirmDeleteTag(mode){
+  const c = tagEditing, words = allVocab().filter(w=>w.cat===c);
+  if(mode==='move'){
+    const target = document.getElementById('delMoveTarget').value;
+    words.forEach(w=>{ wordCategoryOverrides[w.id] = target; });
+  } else if(mode==='purge'){
+    const typed = (document.getElementById('delConfirmInput').value||'').trim().toLowerCase();
+    if(typed!=='delete'){ const m=document.getElementById('delMsg'); if(m) m.textContent='請輸入 delete 才能刪除'; return; }
+    prefs.delIds = prefs.delIds || {};
+    const ids = new Set(words.map(w=>w.id));
+    ids.forEach(id=>{ prefs.delIds[id] = true; delete progress[id]; });
+    customVocab = customVocab.filter(w=>!ids.has(w.id));
+  }
+  pinnedCategories = pinnedCategories.filter(x=>x!==c);
+  if(cardState.filterCat===c) cardState.filterCat = 'ALL';
+  wgState.ids = [];
+  saveAll(); cardState.pool = []; openTagManager();
+}
+function openCardTag(){
+  const w = cardState.pool[cardState.idx]; if(!w) return;
+  cardTagWordId = w.id;
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>🏷️ 更改「${escapeHtml(w.french)}」的分類</h3>
+    <select id="cardTagSel" onchange="document.getElementById('cardTagNew').style.display = this.value==='__NEW__' ? 'block' : 'none'">
+      ${allCategories().map(c=>`<option value="${escapeHtml(c)}" ${c===w.cat?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+      <option value="__NEW__">➕ 新增標籤...</option>
+    </select>
+    <input type="text" id="cardTagNew" placeholder="輸入新標籤名稱" style="display:none; margin-top:8px;">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmCardTag()">儲存</button>
+    </div>`);
+}
+function confirmCardTag(){
+  const sel = document.getElementById('cardTagSel').value;
+  const cat = sel==='__NEW__' ? document.getElementById('cardTagNew').value.trim() : sel;
+  if(!cat){ alert('請輸入標籤名稱'); return; }
+  wordCategoryOverrides[cardTagWordId] = cat;
+  saveAll(); closeModal(); buildCardPool(); renderCards();
+}
+
+/* ---- 複製到提醒事項 ---- */
+function makeReminderText(){
+  const catEl = document.getElementById('rmCat'); if(!catEl) return;
+  const cat = catEl.value, n = parseInt(document.getElementById('rmCount').value), fmt = document.getElementById('rmFmt').value;
+  let pool = allVocab().filter(w=>w.french); if(cat!=='ALL') pool = pool.filter(w=>w.cat===cat);
+  pool = shuffle(pool).slice(0,n);
+  document.getElementById('rmText').value = pool.map(w=>{ const m = w.chinese || w.english; return (fmt==='both' && m) ? w.french+' — '+m : w.french; }).join('\n');
+  document.getElementById('rmMsg').textContent = pool.length ? '' : '這個分類沒有單字';
+}
+function copyReminderText(){
+  const ta = document.getElementById('rmText'), msg = document.getElementById('rmMsg');
+  if(!ta.value) makeReminderText();
+  const text = ta.value; if(!text) return;
+  const fallback = () => { ta.focus(); ta.select(); ta.setSelectionRange(0,99999); let ok=false; try{ ok = document.execCommand('copy'); }catch(e){} msg.textContent = ok ? '✅ 已複製，去提醒事項貼上吧' : '請長按上方文字框 →「全選」→「拷貝」'; };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{ msg.textContent = '✅ 已複製，去提醒事項貼上吧'; }).catch(fallback);
+  } else fallback();
+}
+function exportBackup(){
+  const data = {
+    customVocab, customArticles, notesStore, progress, quizHistory, prefs,
+    pinnedCategories, deletedCategories, wordCategoryOverrides,
+    articleFolders, articleFolderOverrides, deletedFolders,
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'fr_app_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function resetProgress(){
+  openModal(`<button class="modal-close" onclick="closeModal()">✕</button><h3>重設學習進度</h3>
+    <div style="font-size:13.5px; margin-bottom:14px; line-height:1.6;">確定要清空所有學習進度與小工具打勾紀錄嗎？（不包含新增的單字／文章）</div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-bad" onclick="confirmReset()">確定重設</button></div>`);
+}
+function confirmReset(){
+  progress = {}; quizHistory = {played:0,correct:0,total:0}; prefs.wgDone = {};
+  saveAll(); closeModal(); renderMe();
+}
+
+/* ============================================================
+   OCR（拍照辨識）
+   ============================================================ */
+let ocrLoaded = false;
+function loadTesseract(cb){
+  if(window.Tesseract){ ocrLoaded = true; cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js';
+  s.onload = () => { ocrLoaded = true; cb(); };
+  s.onerror = () => {
+    const status = document.getElementById('ocrStatus');
+    if(status) status.textContent = '⚠️ 無法載入辨識功能，請確認網路連線後再試一次';
+  };
+  document.head.appendChild(s);
+}
+function runOcr(){
+  const fileInput = document.getElementById('ocrFile');
+  const file = fileInput && fileInput.files[0];
+  if(!file){ alert('請先拍照或選一張圖片'); return; }
+  const status = document.getElementById('ocrStatus');
+  status.textContent = ocrLoaded ? '辨識中...' : '載入辨識引擎中...（需要網路，第一次會比較久）';
+  loadTesseract(() => {
+    status.textContent = '辨識中... 0%';
+    window.Tesseract.recognize(file, 'fra+eng', {
+      logger: m => { if(m.status==='recognizing text' && status) status.textContent = '辨識中... ' + Math.round((m.progress||0)*100) + '%'; }
+    }).then(({data:{text}}) => {
+      document.getElementById('ocrResult').value = (text||'').trim();
+      status.textContent = text && text.trim() ? '✅ 辨識完成！請檢查文字，再填入下方欄位' : '沒有辨識到文字，換一張清楚一點的照片試試';
+    }).catch(() => {
+      status.textContent = '⚠️ 辨識失敗，請確認網路連線或換一張照片';
+    });
+  });
+}
+
+/* ---- 文章詳細頁：搬移資料夾 ---- */
+function toggleMoveFolderBox(){
+  const box = document.getElementById('moveFolderBox');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+}
+function confirmMoveArticleFolder(){
+  const sel = document.getElementById('moveFolderTarget').value;
+  let target = sel;
+  if(sel === '__NEW__'){
+    target = document.getElementById('moveFolderNewName').value.trim();
+    if(!target){ alert('請輸入新資料夾名稱'); return; }
+  }
+  articleFolderOverrides[readingState.openId] = target;
+  saveAll();
+  renderArticleDetail();
+}
+
+/* ---- 備份匯入 ---- */
+function importBackup(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      const vocabKeySet = new Set(allVocab().map(v => (v.french+'|'+v.chinese).toLowerCase().trim()));
+      let addedVocab = 0, skippedVocab = 0;
+      (data.customVocab||[]).forEach(w=>{
+        const key = (w.french+'|'+w.chinese).toLowerCase().trim();
+        if(vocabKeySet.has(key)){ skippedVocab++; return; }
+        vocabKeySet.add(key);
+        if(customVocab.some(x=>x.id===w.id)) w.id = 'bk'+Date.now()+Math.random().toString(36).slice(2,7);
+        customVocab.push(w);
+        addedVocab++;
+      });
+      const artKeySet = new Set(allArticles().map(a => (a.title+'|'+(a.text||a.url||'')).toLowerCase().trim()));
+      let addedArt = 0, skippedArt = 0;
+      (data.customArticles||[]).forEach(a=>{
+        const key = (a.title+'|'+(a.text||a.url||'')).toLowerCase().trim();
+        if(artKeySet.has(key)){ skippedArt++; return; }
+        artKeySet.add(key);
+        if(customArticles.some(x=>x.id===a.id)) a.id = 'bk'+Date.now()+Math.random().toString(36).slice(2,7);
+        customArticles.push(a);
+        addedArt++;
+      });
+      Object.keys(data.notesStore||{}).forEach(articleId=>{
+        if(!notesStore[articleId]) notesStore[articleId] = [];
+        const noteKeySet = new Set(notesStore[articleId].map(n => (n.quote||'')+'|'+n.note));
+        (data.notesStore[articleId]||[]).forEach(n=>{
+          const key = (n.quote||'')+'|'+n.note;
+          if(!noteKeySet.has(key)){ notesStore[articleId].push(n); noteKeySet.add(key); }
+        });
+      });
+      Object.keys(data.progress||{}).forEach(id=>{ if(!progress[id]) progress[id] = data.progress[id]; });
+      if(data.quizHistory){
+        quizHistory.played = (quizHistory.played||0) + (data.quizHistory.played||0);
+        quizHistory.correct = (quizHistory.correct||0) + (data.quizHistory.correct||0);
+        quizHistory.total = (quizHistory.total||0) + (data.quizHistory.total||0);
+      }
+      (data.pinnedCategories||[]).forEach(c=>{ if(!pinnedCategories.includes(c)) pinnedCategories.push(c); });
+      (data.deletedCategories||[]).forEach(c=>{ if(!deletedCategories.includes(c)) deletedCategories.push(c); });
+      wordCategoryOverrides = {...(data.wordCategoryOverrides||{}), ...wordCategoryOverrides};
+      (data.articleFolders||[]).forEach(f=>{ if(!articleFolders.includes(f)) articleFolders.push(f); });
+      articleFolderOverrides = {...(data.articleFolderOverrides||{}), ...articleFolderOverrides};
+      (data.deletedFolders||[]).forEach(f=>{ if(!deletedFolders.includes(f)) deletedFolders.push(f); });
+      if(data.prefs && data.prefs.delIds){ prefs.delIds = {...data.prefs.delIds, ...(prefs.delIds||{})}; }
+      saveAll();
+      cardState.pool = [];
+      alert(`匯入完成！\n單字：新增 ${addedVocab} 筆，略過 ${skippedVocab} 筆重複\n文章：新增 ${addedArt} 筆，略過 ${skippedArt} 筆重複`);
+      renderMe();
+    }catch(err){ alert('檔案格式錯誤，匯入失敗'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   批次匯入單字 (Excel / PDF)
+   ============================================================ */
+let importedRows = [];
+let importRaw = { rows: [], headerRow: [] };
+
+function openImportModal(){
+  importRaw = { rows: [], headerRow: [] };
+  importedRows = [];
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>📂 批次匯入單字</h3>
+    <div style="font-size:12.5px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
+      支援 <b>.xlsx / .xls</b> 試算表，或<b>有文字層</b>的 .pdf（例如你自己打字做的 PDF）。<br>
+      ⚠️ 純圖片掃描的 PDF（像拍照掃描的課本）抓不到文字，這是格式本身的限制，這種檔案建議用「新增單字」裡的拍照辨識，一筆一筆處理並自行核對。
+    </div>
+    <input type="file" accept=".xlsx,.xls,.pdf" id="importFile2">
+    <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="startImportParse()">開始解析</button>
+    <div id="importStatus" style="font-size:12px; color:var(--muted); margin-top:8px;"></div>
+    <div id="importMappingArea"></div>
+    <div id="importPreviewWrap"></div>
+  `);
+}
+function loadSheetJS(cb){
+  if(window.XLSX){ cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s.onload = cb;
+  s.onerror = () => { const st=document.getElementById('importStatus'); if(st) st.textContent = '⚠️ 無法載入 Excel 解析功能，請確認網路連線'; };
+  document.head.appendChild(s);
+}
+function loadPdfJs(cb){
+  if(window.pdfjsLib){ cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+  s.onload = () => {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    cb();
+  };
+  s.onerror = () => { const st=document.getElementById('importStatus'); if(st) st.textContent = '⚠️ 無法載入 PDF 解析功能，請確認網路連線'; };
+  document.head.appendChild(s);
+}
+function startImportParse(){
+  const f = document.getElementById('importFile2').files[0];
+  if(!f){ alert('請先選一個檔案'); return; }
+  const name = f.name.toLowerCase();
+  const status = document.getElementById('importStatus');
+  document.getElementById('importMappingArea').innerHTML = '';
+  document.getElementById('importPreviewWrap').innerHTML = '';
+  if(name.endsWith('.xlsx') || name.endsWith('.xls')){
+    status.textContent = '載入解析引擎中...（需要網路，第一次比較久）';
+    loadSheetJS(() => { status.textContent = '解析中...'; parseXlsxFile(f); });
+  } else if(name.endsWith('.pdf')){
+    status.textContent = '載入解析引擎中...（需要網路，第一次比較久）';
+    loadPdfJs(() => { status.textContent = '解析中...'; parsePdfFile(f); });
+  } else {
+    alert('目前只支援 .xlsx / .xls / .pdf 檔案');
+  }
+}
+function detectCols(headerRow){
+  const map = {fr:-1,pos:-1,cn:-1,en:-1,ex:-1,cat:-1};
+  (headerRow||[]).forEach((h,i)=>{
+    const s = (h||'').toString().toLowerCase();
+    if(map.fr<0 && (s.includes('法文')||s.includes('french')||s.includes('français'))) map.fr=i;
+    else if(map.pos<0 && (s.includes('詞性')||s.includes('pos')||s.includes('詞類'))) map.pos=i;
+    else if(map.cn<0 && (s.includes('中文')||s.includes('chinese'))) map.cn=i;
+    else if(map.en<0 && (s.includes('英文')||s.includes('english'))) map.en=i;
+    else if(map.ex<0 && (s.includes('例句')||s.includes('example')||s.includes('sentence')||s.includes('句子'))) map.ex=i;
+    else if(map.cat<0 && (s.includes('分類')||s.includes('category')||s.includes('主題'))) map.cat=i;
+  });
+  return map;
+}
+function parseXlsxFile(file){
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      const wb = window.XLSX.read(e.target.result, {type:'array'});
+      let rawRows = [];
+      let headerRow = [];
+      let gotHeader = false;
+      wb.SheetNames.forEach(sheetName => {
+        if(sheetName === '說明') return;
+        const ws = wb.Sheets[sheetName];
+        const data = window.XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if(data.length < 1) return;
+        if(!gotHeader){ headerRow = data[0]; gotHeader = true; }
+        data.forEach((row,ri)=>{
+          if(!row || row.every(c=>c===''||c===null||c===undefined)) return;
+          rawRows.push({cells: row, sheet: sheetName, isFirstRow: ri===0});
+        });
+      });
+      if(rawRows.length===0){
+        document.getElementById('importStatus').textContent = '⚠️ 讀不到任何資料列，請確認檔案內容';
+        return;
+      }
+      importRaw = { rows: rawRows, headerRow };
+      document.getElementById('importStatus').textContent = `✅ 讀到 ${rawRows.length} 列資料，請確認下面的欄位對應（例句抓不到的話可以在這裡手動調整）`;
+      renderColumnMapping('Excel');
+    }catch(err){
+      document.getElementById('importStatus').textContent = '⚠️ 解析失敗，請確認檔案格式是否為正常的 Excel 檔';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function renderColumnMapping(sourceType){
+  const rows = importRaw.rows;
+  const header = importRaw.headerRow || [];
+  const maxCols = Math.max(...rows.map(r=>r.cells.length), header.length, 1);
+  const guess = detectCols(header);
+  const looksLikeHeader = header.some(h=>{
+    const s = (h||'').toString().toLowerCase();
+    return s.includes('法文')||s.includes('中文')||s.includes('english')||s.includes('french')||s.includes('例句');
+  });
+  if(!looksLikeHeader && guess.fr<0 && guess.cn<0 && guess.en<0){
+    guess.fr=0; guess.cn=1; guess.en=2; guess.ex=3;
+  }
+  const colOpt = (sel) => {
+    let o = '<option value="-1">（不使用）</option>';
+    for(let i=0;i<maxCols;i++){
+      const raw = header[i];
+      const label = (raw!==undefined && raw!=='') ? String(raw).slice(0,14) : `第 ${i+1} 欄`;
+      o += `<option value="${i}" ${sel===i?'selected':''}>第${i+1}欄：${escapeHtml(label)}</option>`;
+    }
+    return o;
+  };
+  const area = document.getElementById('importMappingArea');
+  area.innerHTML = `
+    <div class="card" style="margin-top:10px;">
+      <div style="font-size:13px; font-weight:700; color:var(--primary); margin-bottom:8px;">🔧 欄位對應（自動偵測不準時可以自己改，改完按下面套用）</div>
+      <div style="font-size:11.5px; color:var(--muted); margin-bottom:2px;">法文（必填）</div>
+      <select id="mapFr">${colOpt(guess.fr)}</select>
+      <div style="font-size:11.5px; color:var(--muted); margin:6px 0 2px;">中文</div>
+      <select id="mapCn">${colOpt(guess.cn)}</select>
+      <div style="font-size:11.5px; color:var(--muted); margin:6px 0 2px;">英文</div>
+      <select id="mapEn">${colOpt(guess.en)}</select>
+      <div style="font-size:11.5px; color:var(--muted); margin:6px 0 2px;">例句</div>
+      <select id="mapEx">${colOpt(guess.ex)}</select>
+      <div style="font-size:11.5px; color:var(--muted); margin:6px 0 2px;">詞性</div>
+      <select id="mapPos">${colOpt(guess.pos)}</select>
+      <div style="font-size:11.5px; color:var(--muted); margin:6px 0 2px;">分類（不選就用工作表名稱）</div>
+      <select id="mapCat">${colOpt(guess.cat)}</select>
+      <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; margin-top:10px;">
+        <input type="checkbox" id="skipHeaderChk" ${looksLikeHeader?'checked':''} style="width:auto;"> 第一列是標題列，跳過不匯入
+      </label>
+      <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="applyColumnMapping('${sourceType}')">套用欄位設定，產生預覽 →</button>
+    </div>
+  `;
+  applyColumnMapping(sourceType);
+}
+function looksLikeDefaultSheetName(name){
+  return /^(sheet\s*\d*|工作表\s*\d*)$/i.test((name||'').trim());
+}
+function applyColumnMapping(sourceType){
+  const m = {
+    fr: parseInt(document.getElementById('mapFr').value),
+    cn: parseInt(document.getElementById('mapCn').value),
+    en: parseInt(document.getElementById('mapEn').value),
+    ex: parseInt(document.getElementById('mapEx').value),
+    pos: parseInt(document.getElementById('mapPos').value),
+    cat: parseInt(document.getElementById('mapCat').value),
+    skipHeader: document.getElementById('skipHeaderChk').checked,
+  };
+  const rows = [];
+  importRaw.rows.forEach(r=>{
+    if(m.skipHeader && r.isFirstRow) return;
+    const cells = r.cells;
+    const fr = m.fr>=0 ? String(cells[m.fr]||'').trim() : '';
+    if(!fr) return;
+    let cat = '';
+    if(m.cat>=0 && cells[m.cat]) cat = String(cells[m.cat]).trim();
+    else if(!looksLikeDefaultSheetName(r.sheet)) cat = r.sheet;
+    rows.push({
+      select:true,
+      french: fr,
+      pos: m.pos>=0 ? String(cells[m.pos]||'').trim() : '',
+      chinese: m.cn>=0 ? String(cells[m.cn]||'').trim() : '',
+      english: m.en>=0 ? String(cells[m.en]||'').trim() : '',
+      example: m.ex>=0 ? String(cells[m.ex]||'').trim() : '',
+      cat: cat,
+    });
+  });
+  finishParse(rows, sourceType);
+}
+async function parsePdfFile(file){
+  const status = document.getElementById('importStatus');
+  try{
+    const buf = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({data:buf}).promise;
+    let allLines = [];
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      let lineMap = {};
+      content.items.forEach(it=>{
+        const y = Math.round(it.transform[5]);
+        if(!lineMap[y]) lineMap[y]=[];
+        lineMap[y].push(it.str);
+      });
+      Object.keys(lineMap).sort((a,b)=>b-a).forEach(y=>{
+        const line = lineMap[y].join(' ').trim();
+        if(line) allLines.push(line);
+      });
+      if(status) status.textContent = `解析中... 第 ${p}/${pdf.numPages} 頁`;
+    }
+    if(allLines.length===0){
+      status.textContent = '這份 PDF 抓不到文字（可能是掃描圖片檔），沒辦法自動匯入。建議改用「新增單字」裡的拍照辨識，一筆一筆處理並自行核對。';
+      return;
+    }
+    const rows = [];
+    const seps = [' - ', '：', ' : ', '\t', ' — ', ' – ', ' = '];
+    allLines.forEach(line=>{
+      let parts = null;
+      for(const sep of seps){ if(line.includes(sep)){ parts = line.split(sep); break; } }
+      if(!parts || parts.length<2) return;
+      const fr = parts[0].trim();
+      const rest = parts.slice(1).join(' ').trim();
+      if(!fr || !rest || fr.length>50) return;
+      rows.push({select:true, french:fr, pos:'', chinese:rest, english:'', example:'', cat:'PDF 匯入'});
+    });
+    finishParse(rows, 'PDF');
+  }catch(err){
+    if(status) status.textContent = '⚠️ PDF 解析失敗：' + (err.message||'請換一個檔案再試');
+  }
+}
+function finishParse(rows, sourceType){
+  importedRows = rows;
+  const status = document.getElementById('importStatus');
+  if(rows.length===0){
+    status.textContent = `沒有解析到任何單字。${sourceType==='PDF'?'PDF 裡的文字排列格式可能不是「法文－意思」這種形式，建議改用 Excel 檔匯入，或用拍照單筆新增。':'請確認欄位內容，或檢查表頭有沒有包含「法文／中文／英文」等字樣。'}`;
+    document.getElementById('importPreviewWrap').innerHTML = '';
+    return;
+  }
+  const capped = rows.length > 200;
+  status.textContent = `✅ 解析到 ${rows.length} 筆！請檢查內容（可直接編輯、取消勾選不要的項目）再確認匯入。${capped?'為了手機順暢，下面僅預覽前 200 筆，其餘會照樣一起匯入。':''}`;
+  renderImportPreview();
+}
+function renderImportPreview(){
+  const wrap = document.getElementById('importPreviewWrap');
+  const checkedCount = importedRows.filter(r=>r.select).length;
+  const showRows = importedRows.slice(0, 200);
+  wrap.innerHTML = `
+    <div class="btn-row" style="margin:10px 0;">
+      <button class="btn btn-ghost" onclick="toggleAllImport(true)">全選</button>
+      <button class="btn btn-ghost" onclick="toggleAllImport(false)">取消全選</button>
+    </div>
+    <div style="max-height:340px; overflow-y:auto; border:1px solid var(--border); border-radius:10px;">
+      ${showRows.map((r,i)=>`
+        <div style="padding:7px 8px; border-bottom:1px solid var(--border);">
+          <div style="display:flex; gap:5px; align-items:center; margin-bottom:4px;">
+            <input type="checkbox" ${r.select?'checked':''} onchange="importedRows[${i}].select=this.checked" style="width:auto; flex:0 0 auto;">
+            <input type="text" value="${escapeHtml(r.french)}" oninput="importedRows[${i}].french=this.value" placeholder="法文" style="width:33%; padding:5px; font-size:11.5px;">
+            <input type="text" value="${escapeHtml(r.chinese)}" oninput="importedRows[${i}].chinese=this.value" placeholder="中文" style="width:33%; padding:5px; font-size:11.5px;">
+            <input type="text" value="${escapeHtml(r.english)}" oninput="importedRows[${i}].english=this.value" placeholder="英文" style="width:33%; padding:5px; font-size:11.5px;">
+          </div>
+          <input type="text" value="${escapeHtml(r.example)}" oninput="importedRows[${i}].example=this.value" placeholder="例句" style="width:100%; padding:5px; font-size:11.5px; color:var(--muted); margin-bottom:4px;">
+          <div style="display:flex; gap:5px;">
+            <input type="text" value="${escapeHtml(r.pos)}" oninput="importedRows[${i}].pos=this.value" placeholder="詞性（選填）" style="width:50%; padding:5px; font-size:11px; color:var(--muted);">
+            <input type="text" value="${escapeHtml(r.cat)}" oninput="importedRows[${i}].cat=this.value" placeholder="分類（選填）" style="width:50%; padding:5px; font-size:11px; color:var(--muted);">
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="confirmImport()">✅ 確認匯入（目前勾選 ${checkedCount} 筆）</button>
+  `;
+}
+function toggleAllImport(v){
+  importedRows.forEach(r=>r.select=v);
+  renderImportPreview();
+}
+function confirmImport(){
+  const existingKeys = new Set(allVocab().map(v=>(v.french+'|'+v.chinese).toLowerCase().trim()));
+  let added=0, skippedDup=0;
+  importedRows.filter(r=>r.select && r.french.trim()).forEach(r=>{
+    const key = (r.french+'|'+r.chinese).toLowerCase().trim();
+    if(existingKeys.has(key)){ skippedDup++; return; }
+    existingKeys.add(key);
+    customVocab.push({
+      id: 'imp'+Date.now()+Math.random().toString(36).slice(2,7),
+      cat: (r.cat && r.cat.trim()) || '片語',
+      french: r.french.trim(), pos: r.pos||'', chinese: r.chinese||'', english: r.english||'', example: r.example||'',
+    });
+    added++;
+  });
+  saveAll();
+  closeModal();
+  cardState.pool = [];
+  alert(`匯入完成！新增 ${added} 筆${skippedDup?`，略過 ${skippedDup} 筆重複`:''}`);
+  renderMe();
+}
+
+/* ============================================================
+   管理我新增的單字
+   ============================================================ */
+function openManageWordsModal(){
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>🗂️ 管理我新增的單字（${customVocab.length}）</h3>
+    <div style="max-height:60vh; overflow-y:auto;">
+      ${customVocab.length ? customVocab.map((w,i)=>`
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--border);">
+          <div style="font-size:13px; flex:1;"><b>${escapeHtml(w.french)}</b> — ${escapeHtml(w.chinese)}<br><span style="color:var(--muted); font-size:11px;">${escapeHtml(w.cat)}</span></div>
+          <button class="btn btn-bad" style="padding:7px 12px; font-size:11.5px; flex:0 0 auto;" onclick="deleteCustomWord(${i})">刪除</button>
+        </div>
+      `).join('') : '<div class="empty-hint">還沒有自己新增的單字</div>'}
+    </div>
+  `);
+}
+function deleteCustomWord(i){
+  if(!confirm('確定要刪除「'+customVocab[i].french+'」嗎？')) return;
+  const removedId = customVocab[i].id;
+  customVocab.splice(i,1);
+  delete progress[removedId];
+  saveAll();
+  cardState.pool = [];
+  openManageWordsModal();
+}
+
+/* ============================================================
+   管理主題分類（搬移單字／合併／刪除）
+   ============================================================ */
+let manageCatList = [];
+let moveModalCat = null;
+let moveModalWords = [];
+
+function openManageCategoriesModal(){
+  manageCatList = allCategories();
+  const counts = {};
+  allVocab().forEach(w=>{ counts[w.cat] = (counts[w.cat]||0) + 1; });
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>🗂️ 管理主題分類</h3>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
+      「搬移/合併」可以勾選分類中的單字（部分或全部），搬到另一個分類。<br>
+      「刪除」會把該分類以及其中的單字一併移除，需要輸入 <b>delete</b> 才會生效，避免手滑誤刪。
+    </div>
+    <div style="max-height:60vh; overflow-y:auto;">
+      ${manageCatList.map((c,i)=>`
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:9px 0; border-bottom:1px solid var(--border);">
+          <div style="font-size:13px; flex:1;"><b>${escapeHtml(c)}</b><br><span style="color:var(--muted); font-size:11px;">${counts[c]||0} 個單字</span></div>
+          <button class="btn btn-outline" style="padding:7px 9px; font-size:11px; flex:0 0 auto;" onclick="openMoveWordsModal(${i})">搬移/合併</button>
+          <button class="btn btn-bad" style="padding:7px 9px; font-size:11px; flex:0 0 auto;" onclick="openDeleteCategoryModal(${i})">刪除</button>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+function openMoveWordsModal(i){
+  moveModalCat = manageCatList[i];
+  moveModalWords = allVocab().filter(w=>w.cat===moveModalCat).map(w=>({...w, checked:true}));
+  renderMoveWordsModal();
+}
+function renderMoveWordsModal(){
+  const otherCats = allCategories().filter(c=>c!==moveModalCat);
+  openModal(`
+    <button class="modal-close" onclick="openManageCategoriesModal()">✕</button>
+    <h3>📦 搬移「${escapeHtml(moveModalCat)}」的單字</h3>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">勾選要搬移的單字，預設全選，取消勾選代表留在原本分類。</div>
+    <div class="btn-row" style="margin-bottom:8px;">
+      <button class="btn btn-ghost" onclick="toggleAllMoveWords(true)">全選</button>
+      <button class="btn btn-ghost" onclick="toggleAllMoveWords(false)">取消全選</button>
+    </div>
+    <div style="max-height:36vh; overflow-y:auto; border:1px solid var(--border); border-radius:10px; margin-bottom:12px;">
+      ${moveModalWords.length ? moveModalWords.map((w,i)=>`
+        <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border); font-size:13px;">
+          <input type="checkbox" ${w.checked?'checked':''} onchange="moveModalWords[${i}].checked=this.checked" style="width:auto;">
+          <span><b>${escapeHtml(w.french)}</b> — ${escapeHtml(w.chinese)}</span>
+        </label>
+      `).join('') : '<div class="empty-hint">這個分類目前沒有單字</div>'}
+    </div>
+    <label class="field-label">搬移到哪個分類？</label>
+    <select id="moveTargetCat" onchange="document.getElementById('moveNewCatName').style.display = this.value==='__NEW__' ? 'block' : 'none';">
+      ${otherCats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
+      <option value="__NEW__">➕ 新增分類...</option>
+    </select>
+    <input type="text" id="moveNewCatName" placeholder="輸入新分類名稱" style="display:none; margin-top:8px;">
+    <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="confirmMoveWords()">✅ 搬移勾選的單字</button>
+  `);
+}
+function toggleAllMoveWords(v){
+  moveModalWords.forEach(w=>w.checked=v);
+  renderMoveWordsModal();
+}
+function confirmMoveWords(){
+  const sel = document.getElementById('moveTargetCat').value;
+  let target = sel;
+  if(sel === '__NEW__'){
+    target = document.getElementById('moveNewCatName').value.trim();
+    if(!target){ alert('請輸入新分類名稱'); return; }
+  }
+  const idsToMove = moveModalWords.filter(w=>w.checked).map(w=>w.id);
+  if(idsToMove.length===0){ alert('請至少勾選一個單字'); return; }
+  idsToMove.forEach(id => { wordCategoryOverrides[id] = target; });
+  saveAll();
+  cardState.pool = [];
+  alert(`已搬移 ${idsToMove.length} 個單字到「${target}」`);
+  openManageCategoriesModal();
+}
+function openDeleteCategoryModal(i){
+  const cat = manageCatList[i];
+  const count = allVocab().filter(w=>w.cat===cat).length;
+  openModal(`
+    <button class="modal-close" onclick="openManageCategoriesModal()">✕</button>
+    <h3>🗑️ 刪除分類「${escapeHtml(cat)}」</h3>
+    <div style="font-size:13px; color:var(--bad); margin-bottom:12px; line-height:1.6;">
+      ⚠️ 這會把「${escapeHtml(cat)}」分類與底下所有 ${count} 個單字一併移除，此操作無法復原。
+    </div>
+    <label class="field-label">請輸入 delete 以確認：</label>
+    <input type="text" id="deleteConfirmInput" placeholder="delete" autocapitalize="off" autocomplete="off">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="openManageCategoriesModal()">取消</button>
+      <button class="btn btn-bad" onclick="confirmDeleteCategory()">確認刪除</button>
+    </div>
+  `);
+  moveModalCat = cat;
+}
+function confirmDeleteCategory(){
+  const cat = moveModalCat;
+  const typed = (document.getElementById('deleteConfirmInput').value || '').trim().toLowerCase();
+  if(typed !== 'delete'){ alert('請輸入 delete 才能刪除'); return; }
+  customVocab = customVocab.filter(w => (wordCategoryOverrides[w.id]||w.cat) !== cat);
+  if(!deletedCategories.includes(cat)) deletedCategories.push(cat);
+  pinnedCategories = pinnedCategories.filter(x=>x!==cat);
+  saveAll();
+  cardState.pool = [];
+  alert(`已刪除「${cat}」分類`);
+  openManageCategoriesModal();
+}
+
+/* ============================================================
+   管理閱讀資料夾（搬移/合併/刪除）
+   ============================================================ */
+let manageFolderList = [];
+let moveFolderModalName = null;
+let moveFolderModalArticles = [];
+
+function openManageFoldersModal(){
+  manageFolderList = allArticleFolders();
+  const counts = {};
+  allArticles().forEach(a=>{ counts[a.folder] = (counts[a.folder]||0) + 1; });
+  openModal(`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3>📁 管理閱讀資料夾</h3>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.6;">
+      「搬移/合併」可以勾選資料夾裡的文章（部分或全部），搬到另一個資料夾。<br>
+      「刪除」會把該資料夾與其中的文章一併移除，需要輸入 <b>delete</b> 才會生效。
+    </div>
+    <div style="max-height:60vh; overflow-y:auto;">
+      ${manageFolderList.map((f,i)=>`
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; padding:9px 0; border-bottom:1px solid var(--border);">
+          <div style="font-size:13px; flex:1;"><b>${escapeHtml(f)}</b><br><span style="color:var(--muted); font-size:11px;">${counts[f]||0} 篇文章</span></div>
+          <button class="btn btn-outline" style="padding:7px 9px; font-size:11px; flex:0 0 auto;" onclick="openMoveArticlesModal(${i})">搬移/合併</button>
+          <button class="btn btn-bad" style="padding:7px 9px; font-size:11px; flex:0 0 auto;" onclick="openDeleteFolderModal(${i})">刪除</button>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+function openMoveArticlesModal(i){
+  moveFolderModalName = manageFolderList[i];
+  moveFolderModalArticles = allArticles().filter(a=>a.folder===moveFolderModalName).map(a=>({...a, checked:true}));
+  renderMoveArticlesModal();
+}
+function renderMoveArticlesModal(){
+  const otherFolders = allArticleFolders().filter(f=>f!==moveFolderModalName);
+  openModal(`
+    <button class="modal-close" onclick="openManageFoldersModal()">✕</button>
+    <h3>📦 搬移「${escapeHtml(moveFolderModalName)}」的文章</h3>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">勾選要搬移的文章，預設全選，取消勾選代表留在原本資料夾。</div>
+    <div class="btn-row" style="margin-bottom:8px;">
+      <button class="btn btn-ghost" onclick="toggleAllMoveArticles(true)">全選</button>
+      <button class="btn btn-ghost" onclick="toggleAllMoveArticles(false)">取消全選</button>
+    </div>
+    <div style="max-height:36vh; overflow-y:auto; border:1px solid var(--border); border-radius:10px; margin-bottom:12px;">
+      ${moveFolderModalArticles.length ? moveFolderModalArticles.map((a,i)=>`
+        <label style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border); font-size:13px;">
+          <input type="checkbox" ${a.checked?'checked':''} onchange="moveFolderModalArticles[${i}].checked=this.checked" style="width:auto;">
+          <span>${a.type==='link'?'🔗 ':''}${escapeHtml(a.title)}</span>
+        </label>
+      `).join('') : '<div class="empty-hint">這個資料夾目前沒有文章</div>'}
+    </div>
+    <label class="field-label">搬移到哪個資料夾？</label>
+    <select id="moveArticleTargetFolder" onchange="document.getElementById('moveArticleNewFolderName').style.display = this.value==='__NEW__' ? 'block' : 'none';">
+      ${otherFolders.map(f=>`<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('')}
+      <option value="__NEW__">➕ 新增資料夾...</option>
+    </select>
+    <input type="text" id="moveArticleNewFolderName" placeholder="輸入新資料夾名稱" style="display:none; margin-top:8px;">
+    <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="confirmMoveArticles()">✅ 搬移勾選的文章</button>
+  `);
+}
+function toggleAllMoveArticles(v){
+  moveFolderModalArticles.forEach(a=>a.checked=v);
+  renderMoveArticlesModal();
+}
+function confirmMoveArticles(){
+  const sel = document.getElementById('moveArticleTargetFolder').value;
+  let target = sel;
+  if(sel === '__NEW__'){
+    target = document.getElementById('moveArticleNewFolderName').value.trim();
+    if(!target){ alert('請輸入新資料夾名稱'); return; }
+  }
+  const idsToMove = moveFolderModalArticles.filter(a=>a.checked).map(a=>a.id);
+  if(idsToMove.length===0){ alert('請至少勾選一篇文章'); return; }
+  idsToMove.forEach(id => { articleFolderOverrides[id] = target; });
+  saveAll();
+  alert(`已搬移 ${idsToMove.length} 篇文章到「${target}」`);
+  openManageFoldersModal();
+}
+function openDeleteFolderModal(i){
+  const folder = manageFolderList[i];
+  const count = allArticles().filter(a=>a.folder===folder).length;
+  openModal(`
+    <button class="modal-close" onclick="openManageFoldersModal()">✕</button>
+    <h3>🗑️ 刪除資料夾「${escapeHtml(folder)}」</h3>
+    <div style="font-size:13px; color:var(--bad); margin-bottom:12px; line-height:1.6;">
+      ⚠️ 這會把「${escapeHtml(folder)}」資料夾與底下所有 ${count} 篇文章（含筆記）一併移除，此操作無法復原。
+    </div>
+    <label class="field-label">請輸入 delete 以確認：</label>
+    <input type="text" id="deleteFolderConfirmInput" placeholder="delete" autocapitalize="off" autocomplete="off">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" onclick="openManageFoldersModal()">取消</button>
+      <button class="btn btn-bad" onclick="confirmDeleteFolder()">確認刪除</button>
+    </div>
+  `);
+  moveFolderModalName = folder;
+}
+function confirmDeleteFolder(){
+  const folder = moveFolderModalName;
+  const typed = (document.getElementById('deleteFolderConfirmInput').value || '').trim().toLowerCase();
+  if(typed !== 'delete'){ alert('請輸入 delete 才能刪除'); return; }
+  const removedIds = allArticles().filter(a=>a.folder===folder).map(a=>a.id);
+  removedIds.forEach(id => { delete notesStore[id]; });
+  customArticles = customArticles.filter(a => (articleFolderOverrides[a.id]||a.folder) !== folder);
+  if(!deletedFolders.includes(folder)) deletedFolders.push(folder);
+  saveAll();
+  alert(`已刪除「${folder}」資料夾`);
+  openManageFoldersModal();
+}
+
+
+/* ================= INIT ================= */
+switchTab('cards');
+</script>
+</body>
+</html>
